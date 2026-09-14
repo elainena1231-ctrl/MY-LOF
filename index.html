@@ -6,28 +6,15 @@
 <title>我的创作社区</title>
 <style>
   :root {
-    --bg: #fafafa;
-    --card: #ffffff;
-    --border: #eeeeee;
-    --text: #222222;
-    --text-2: #666666;
-    --text-3: #999999;
-    --primary: #ff5c5c;
-    --shadow: rgba(0,0,0,.06);
-    --hover-bg: #f2f2f2;
+    --bg: #fafafa; --card: #ffffff; --border: #eeeeee;
+    --text: #222222; --text-2: #666666; --text-3: #999999;
+    --primary: #ff5c5c; --shadow: rgba(0,0,0,.06); --hover-bg: #f2f2f2;
   }
   body.dark {
-    --bg: #14161a;
-    --card: #1e2126;
-    --border: #2a2e35;
-    --text: #e8eaed;
-    --text-2: #a8adb5;
-    --text-3: #7a8088;
-    --primary: #ff6b6b;
-    --shadow: rgba(0,0,0,.4);
-    --hover-bg: #262a31;
+    --bg: #14161a; --card: #1e2126; --border: #2a2e35;
+    --text: #e8eaed; --text-2: #a8adb5; --text-3: #7a8088;
+    --primary: #ff6b6b; --shadow: rgba(0,0,0,.4); --hover-bg: #262a31;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -35,14 +22,11 @@
     transition: background .25s, color .25s;
   }
   .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
-
   .header {
     background: var(--card); border-bottom: 1px solid var(--border);
     padding: 16px 0; position: sticky; top: 0; z-index: 10;
   }
-  .header .container {
-    padding: 0 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  }
+  .header .container { padding: 0 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .logo { font-size: 20px; font-weight: bold; color: var(--text); text-decoration: none; }
   .logo:hover { color: var(--primary); }
   .slogan { color: var(--text-3); font-size: 13px; }
@@ -66,11 +50,9 @@
     transition: opacity .2s; white-space: nowrap;
   }
   .write-btn:hover { opacity: .85; }
-
   h1 { font-size: 26px; margin-bottom: 6px; }
   h2 { font-size: 18px; margin: 24px 0 12px; }
   .sub { color: var(--text-3); margin-bottom: 24px; }
-
   .tags { display: flex; gap: 8px; flex-wrap: wrap; }
   .tag {
     padding: 6px 14px; background: var(--card); border: 1px solid var(--border);
@@ -78,7 +60,6 @@
     font-size: 14px; transition: all .2s;
   }
   .tag:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-
   .post {
     display: flex; gap: 16px; background: var(--card); border: 1px solid var(--border);
     border-radius: 12px; padding: 12px; margin-bottom: 14px;
@@ -92,14 +73,9 @@
   .post h3 { font-size: 16px; margin-bottom: 6px; color: var(--text); }
   .post p { color: var(--text-2); font-size: 14px; margin-bottom: 8px; }
   .post .meta { font-size: 12px; color: var(--text-3); }
-
-  .back {
-    color: var(--text-2); font-size: 14px; text-decoration: none;
-    display: inline-block; margin-bottom: 16px;
-  }
+  .back { color: var(--text-2); font-size: 14px; text-decoration: none; display: inline-block; margin-bottom: 16px; }
   .back:hover { color: var(--primary); }
   .empty { text-align: center; color: var(--text-3); padding: 60px 0; }
-
   .search-bar { margin-bottom: 20px; }
   .search-bar input {
     width: 100%; padding: 12px 16px; border: 1px solid var(--border);
@@ -107,8 +83,7 @@
     background: var(--card); color: var(--text); outline: none;
   }
   .search-bar input:focus { border-color: var(--primary); }
-
-  .tabs { display: flex; gap: 16px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .tabs { display: flex; gap: 16px; margin-bottom: 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
   .tab {
     font-size: 14px; color: var(--text-3); cursor: pointer;
     padding: 4px 2px 10px; border-bottom: 2px solid transparent;
@@ -116,19 +91,16 @@
   }
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-
   .form-group { margin-bottom: 20px; }
-  .form-group label {
-    display: block; font-size: 14px; color: var(--text-2);
-    margin-bottom: 6px; font-weight: 500;
-  }
-  .form-group input[type="text"], .form-group textarea {
+  .form-group label { display: block; font-size: 14px; color: var(--text-2); margin-bottom: 6px; font-weight: 500; }
+  .form-group input[type="text"], .form-group textarea, .form-group select {
     width: 100%; padding: 12px; border: 1px solid var(--border);
     border-radius: 8px; font-size: 15px; font-family: inherit;
     background: var(--card); color: var(--text); outline: none;
   }
-  .form-group input[type="text"]:focus, .form-group textarea:focus { border-color: var(--primary); }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); }
   .form-group textarea { min-height: 200px; resize: vertical; }
+  .form-group textarea.short { min-height: 80px; }
   .tag-choices { display: flex; gap: 8px; flex-wrap: wrap; }
   .tag-choice {
     padding: 6px 14px; background: var(--card); border: 1px solid var(--border);
@@ -142,7 +114,12 @@
     border-radius: 999px; font-size: 15px; cursor: pointer; transition: opacity .2s;
   }
   .submit-btn:hover { opacity: .85; }
-
+  .btn-secondary {
+    padding: 12px 24px; background: var(--card); color: var(--text-2);
+    border: 1px solid var(--border); border-radius: 999px; font-size: 15px;
+    cursor: pointer; margin-left: 8px; transition: all .2s;
+  }
+  .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
   .upload-box {
     border: 2px dashed var(--border); border-radius: 12px; padding: 24px;
     text-align: center; cursor: pointer; transition: border-color .2s;
@@ -151,12 +128,10 @@
   .upload-box:hover { border-color: var(--primary); }
   .upload-box img { max-width: 100%; max-height: 260px; border-radius: 8px; }
   .upload-box .hint { color: var(--text-3); font-size: 14px; }
-
   .post-cover { width: 100%; border-radius: 12px; margin-bottom: 20px; }
   .post-content { font-size: 16px; color: var(--text-2); }
   .author-link { color: var(--primary); text-decoration: none; }
   .author-link:hover { text-decoration: underline; }
-
   .action-bar { display: flex; gap: 12px; margin: 28px 0; flex-wrap: wrap; }
   .action-btn {
     padding: 10px 24px; background: var(--card); border: 1px solid var(--border);
@@ -166,7 +141,6 @@
   .action-btn:hover { border-color: var(--primary); color: var(--primary); }
   .action-btn.liked { background: var(--primary); color: #fff; border-color: var(--primary); }
   .action-btn.danger:hover { border-color: #e33; color: #e33; }
-
   .comments { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
   .comment-item {
     background: var(--card); border: 1px solid var(--border); border-radius: 10px;
@@ -186,7 +160,6 @@
     border: none; border-radius: 999px; font-size: 14px; cursor: pointer;
   }
   .comment-form button:hover { opacity: .85; }
-
   .follow-btn {
     padding: 8px 22px; background: var(--primary); color: #fff;
     border: 1px solid var(--primary); border-radius: 999px;
@@ -197,6 +170,48 @@
     background: transparent; color: var(--text-2); border-color: var(--border);
   }
   .tag-header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 12px; }
+  .section-head h2 { margin: 0; }
+  .mini-btn {
+    padding: 6px 16px; font-size: 13px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; color: var(--text-2); cursor: pointer;
+    text-decoration: none; transition: all .2s;
+  }
+  .mini-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .mini-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .mini-btn.primary:hover { opacity: .85; color: #fff; }
+
+  /* 合集卡片网格 */
+  .collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .collection-card {
+    display: block; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit;
+    transition: box-shadow .2s;
+  }
+  .collection-card:hover { box-shadow: 0 4px 16px var(--shadow); }
+  .collection-cover {
+    width: 100%; height: 120px; object-fit: cover; background: var(--border);
+    display: block;
+  }
+  .collection-body { padding: 12px 14px; }
+  .collection-body h3 { font-size: 15px; margin-bottom: 4px; color: var(--text); }
+  .collection-body p { font-size: 13px; color: var(--text-3); }
+
+  /* 合集详情头部 */
+  .collection-header {
+    display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .collection-header .ch-cover {
+    width: 200px; height: 140px; border-radius: 12px; object-fit: cover;
+    background: var(--border); flex-shrink: 0;
+  }
+  .collection-header .ch-info { flex: 1; min-width: 200px; }
+  .collection-header h1 { margin-bottom: 8px; }
+  .collection-header .ch-desc { color: var(--text-2); font-size: 14px; margin-bottom: 12px; }
+  .collection-header .ch-meta { color: var(--text-3); font-size: 13px; margin-bottom: 12px; }
+  .danger-text { color: #e33; font-size: 13px; cursor: pointer; text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -206,6 +221,7 @@
     <a href="#/" class="logo">我的创作社区</a>
     <span class="slogan">标签社区 · 图文创作</span>
     <div class="nav-right">
+      <a href="#/collections" class="nav-link">合集广场</a>
       <a href="#/user/我" class="nav-link">我的主页</a>
       <button class="icon-btn" id="themeBtn" title="切换深色模式">🌙</button>
       <a href="#/write" class="write-btn">✏️ 写文章</a>
@@ -225,9 +241,9 @@ const defaultTags = [
 ];
 
 const defaultPosts = [
-  { id: 1, title: '我的第一张板绘', excerpt: '用 iPad 画的第一张原创角色，耗时 6 小时。', content: '用 iPad 画的第一张原创角色，耗时 6 小时。\n\n过程比想象中难，尤其是配色部分，改了好几版才满意。', author: '小明', tags: ['illustration'], cover: 'https://picsum.photos/seed/1/600/400', date: '2026-09-10', likes: 3, comments: [] },
-  { id: 2, title: '午后街拍记录', excerpt: '周末在城市老街区拍的一组照片。', content: '周末在城市老街区拍的一组照片。\n\n光线很好，随手拍都有感觉。', author: '小红', tags: ['photography'], cover: 'https://picsum.photos/seed/2/600/400', date: '2026-09-11', likes: 5, comments: [] },
-  { id: 3, title: '短篇：雨夜', excerpt: '一个关于雨夜的短篇小说。', content: '雨下了一整夜。\n\n他站在窗前，看着楼下的路灯在水洼里碎成一片片光。', author: '小刚', tags: ['writing'], cover: 'https://picsum.photos/seed/3/600/400', date: '2026-09-12', likes: 2, comments: [] },
+  { id: 1, title: '我的第一张板绘', excerpt: '用 iPad 画的第一张原创角色，耗时 6 小时。', content: '用 iPad 画的第一张原创角色，耗时 6 小时。\n\n过程比想象中难，尤其是配色部分，改了好几版才满意。', author: '小明', tags: ['illustration'], cover: 'https://picsum.photos/seed/1/600/400', date: '2026-09-10', likes: 3, comments: [], collectionId: null },
+  { id: 2, title: '午后街拍记录', excerpt: '周末在城市老街区拍的一组照片。', content: '周末在城市老街区拍的一组照片。\n\n光线很好，随手拍都有感觉。', author: '小红', tags: ['photography'], cover: 'https://picsum.photos/seed/2/600/400', date: '2026-09-11', likes: 5, comments: [], collectionId: null },
+  { id: 3, title: '短篇：雨夜', excerpt: '一个关于雨夜的短篇小说。', content: '雨下了一整夜。\n\n他站在窗前，看着楼下的路灯在水洼里碎成一片片光。', author: '小刚', tags: ['writing'], cover: 'https://picsum.photos/seed/3/600/400', date: '2026-09-12', likes: 2, comments: [], collectionId: null },
 ];
 
 // ==================== 本地存储 ====================
@@ -236,6 +252,8 @@ const KEY_LIKES = 'my_likes';
 const KEY_MINE = 'my_post_ids';
 const KEY_FOLLOW = 'my_followed_tags';
 const KEY_THEME = 'my_theme';
+const KEY_COLLECTIONS = 'my_collections';
+const KEY_MY_COLLECTIONS = 'my_collection_ids';
 
 function loadJSON(key, fallback) {
   try {
@@ -253,22 +271,28 @@ let posts = loadJSON(KEY_POSTS, defaultPosts.slice());
 let myLikes = loadJSON(KEY_LIKES, []);
 let myPostIds = loadJSON(KEY_MINE, []);
 let followedTags = loadJSON(KEY_FOLLOW, []);
+let collections = loadJSON(KEY_COLLECTIONS, []);
+let myCollectionIds = loadJSON(KEY_MY_COLLECTIONS, []);
 
-posts.forEach(p => { if (!p.likes) p.likes = 0; if (!p.comments) p.comments = []; });
+posts.forEach(p => {
+  if (!p.likes) p.likes = 0;
+  if (!p.comments) p.comments = [];
+  if (p.collectionId === undefined) p.collectionId = null;
+});
 
 function persist() {
   saveJSON(KEY_POSTS, posts);
   saveJSON(KEY_LIKES, myLikes);
   saveJSON(KEY_MINE, myPostIds);
   saveJSON(KEY_FOLLOW, followedTags);
+  saveJSON(KEY_COLLECTIONS, collections);
+  saveJSON(KEY_MY_COLLECTIONS, myCollectionIds);
 }
 
 const app = document.getElementById('app');
 
 // ==================== 深色模式 ====================
-const savedTheme = localStorage.getItem(KEY_THEME);
-if (savedTheme === 'dark') document.body.classList.add('dark');
-
+if (localStorage.getItem(KEY_THEME) === 'dark') document.body.classList.add('dark');
 function updateThemeBtn() {
   const btn = document.getElementById('themeBtn');
   if (!btn) return;
@@ -276,8 +300,7 @@ function updateThemeBtn() {
 }
 document.getElementById('themeBtn').addEventListener('click', () => {
   document.body.classList.toggle('dark');
-  const isDark = document.body.classList.contains('dark');
-  localStorage.setItem(KEY_THEME, isDark ? 'dark' : 'light');
+  localStorage.setItem(KEY_THEME, document.body.classList.contains('dark') ? 'dark' : 'light');
   updateThemeBtn();
 });
 updateThemeBtn();
@@ -291,14 +314,33 @@ function escapeHTML(str) {
 function coverOf(p) {
   return p.cover || ('https://picsum.photos/seed/' + p.id + '/600/400');
 }
+function collectionCoverOf(c) {
+  return c.cover || ('https://picsum.photos/seed/coll' + c.id + '/600/400');
+}
 function postCardHTML(p) {
+  const coll = p.collectionId ? collections.find(c => c.id === p.collectionId) : null;
   return `
     <a class="post" href="#/post/${p.id}">
       <img src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
       <div>
         <h3>${escapeHTML(p.title)}</h3>
         <p>${escapeHTML(p.excerpt)}</p>
-        <span class="meta">${escapeHTML(p.author)} · ${p.date} · ♡ ${p.likes} · 💬 ${p.comments.length}</span>
+        <span class="meta">
+          ${escapeHTML(p.author)} · ${p.date} · ♡ ${p.likes} · 💬 ${p.comments.length}
+          ${coll ? ' · 📚 ' + escapeHTML(coll.name) : ''}
+        </span>
+      </div>
+    </a>
+  `;
+}
+function collectionCardHTML(c) {
+  const count = posts.filter(p => p.collectionId === c.id).length;
+  return `
+    <a class="collection-card" href="#/collection/${c.id}">
+      <img class="collection-cover" src="${collectionCoverOf(c)}" alt="${escapeHTML(c.name)}" />
+      <div class="collection-body">
+        <h3>📚 ${escapeHTML(c.name)}</h3>
+        <p>${count} 篇文章 · ${escapeHTML(c.author)}</p>
       </div>
     </a>
   `;
@@ -307,7 +349,7 @@ function postCardHTML(p) {
 // ==================== 首页 ====================
 let homeSort = 'new';
 let homeKeyword = '';
-let homeTab = 'all';   // all | following
+let homeTab = 'all';
 
 function renderHome() {
   const tagHTML = tags.map(t =>
@@ -315,13 +357,10 @@ function renderHome() {
   ).join('');
 
   let list = posts.slice();
-
-  // 关注的标签过滤
   if (homeTab === 'following') {
     list = list.filter(p => p.tags.some(s => followedTags.includes(s)));
   }
 
-  // 搜索
   const kw = homeKeyword.trim().toLowerCase();
   if (kw) {
     list = list.filter(p =>
@@ -335,7 +374,6 @@ function renderHome() {
     );
   }
 
-  // 排序
   if (homeSort === 'hot') {
     list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   } else {
@@ -353,10 +391,21 @@ function renderHome() {
     listHTML = list.map(postCardHTML).join('');
   }
 
+  // 热门合集
+  const hotColls = collections.slice().sort((a, b) => {
+    const ca = posts.filter(p => p.collectionId === a.id).length;
+    const cb = posts.filter(p => p.collectionId === b.id).length;
+    return cb - ca;
+  }).slice(0, 4);
+
+  const hotCollHTML = hotColls.length
+    ? `<div class="collection-grid">${hotColls.map(collectionCardHTML).join('')}</div>`
+    : '';
+
   app.innerHTML = `
     <div class="container">
       <h1>发现好内容</h1>
-      <p class="sub">按标签找到你感兴趣的内容</p>
+      <p class="sub">按标签和合集找到你感兴趣的内容</p>
 
       <div class="search-bar">
         <input type="text" id="searchInput" placeholder="搜索标题、正文、作者或标签…" value="${escapeHTML(homeKeyword)}" />
@@ -364,6 +413,14 @@ function renderHome() {
 
       <h2>热门标签</h2>
       <div class="tags">${tagHTML}</div>
+
+      ${hotCollHTML ? `
+        <div class="section-head">
+          <h2>热门合集</h2>
+          <a href="#/collections" class="mini-btn">查看全部 →</a>
+        </div>
+        ${hotCollHTML}
+      ` : ''}
 
       <h2>文章</h2>
       <div class="tabs">
@@ -397,23 +454,17 @@ function renderHome() {
 
 // ==================== 标签页 ====================
 let tagSort = 'new';
-
 function renderTag(slug) {
   const tag = tags.find(t => t.slug === slug);
   if (!tag) { app.innerHTML = `<div class="container"><p class="empty">标签不存在</p></div>`; return; }
-
   const isFollowed = followedTags.includes(slug);
-
   let list = posts.filter(p => p.tags.includes(slug));
   if (tagSort === 'hot') {
     list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   } else {
     list.sort((a, b) => b.id - a.id);
   }
-
-  const listHTML = list.length
-    ? list.map(postCardHTML).join('')
-    : `<p class="empty">这个标签下还没有文章</p>`;
+  const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">这个标签下还没有文章</p>`;
 
   app.innerHTML = `
     <div class="container">
@@ -425,7 +476,6 @@ function renderTag(slug) {
         </button>
       </div>
       <p class="sub">${tag.desc} · ${list.length} 篇文章</p>
-
       <div class="tabs">
         <span class="tab ${tagSort === 'new' ? 'active' : ''}" data-sort="new">最新</span>
         <span class="tab ${tagSort === 'hot' ? 'active' : ''}" data-sort="hot">热门</span>
@@ -435,15 +485,11 @@ function renderTag(slug) {
   `;
 
   document.getElementById('followBtn').addEventListener('click', () => {
-    if (followedTags.includes(slug)) {
-      followedTags = followedTags.filter(s => s !== slug);
-    } else {
-      followedTags.push(slug);
-    }
+    if (followedTags.includes(slug)) followedTags = followedTags.filter(s => s !== slug);
+    else followedTags.push(slug);
     persist();
     renderTag(slug);
   });
-
   document.querySelectorAll('.tab[data-sort]').forEach(el => {
     el.addEventListener('click', () => { tagSort = el.dataset.sort; renderTag(slug); });
   });
@@ -453,14 +499,19 @@ function renderTag(slug) {
 function renderPost(id) {
   const p = posts.find(x => x.id === Number(id));
   if (!p) { app.innerHTML = `<div class="container"><p class="empty">文章不存在</p></div>`; return; }
-
   const tagHTML = p.tags.map(s => {
     const t = tags.find(x => x.slug === s);
     return t ? `<a class="tag" href="#/tag/${t.slug}">#${t.name}</a>` : '';
   }).join('');
-
   const liked = myLikes.includes(p.id);
   const isMine = myPostIds.includes(p.id);
+  const coll = p.collectionId ? collections.find(c => c.id === p.collectionId) : null;
+
+  const collHTML = coll
+    ? `<a href="#/collection/${coll.id}" style="display:inline-block;margin-top:20px;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text-2);font-size:14px;transition:border-color .2s;">
+        📚 收录于合集：<strong style="color:var(--primary);">${escapeHTML(coll.name)}</strong> →
+      </a>`
+    : '';
 
   const commentsHTML = p.comments.length
     ? p.comments.map(c => `
@@ -481,8 +532,8 @@ function renderPost(id) {
       </p>
       <img class="post-cover" src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
       <div class="post-content">${escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>')}</div>
-
       <div class="tags" style="margin-top:24px;">${tagHTML}</div>
+      ${collHTML}
 
       <div class="action-bar">
         <button class="action-btn ${liked ? 'liked' : ''}" id="likeBtn">
@@ -514,10 +565,8 @@ function renderPost(id) {
     persist();
     renderPost(p.id);
   });
-
   const editBtn = document.getElementById('editBtn');
   if (editBtn) editBtn.addEventListener('click', () => { location.hash = '#/edit/' + p.id; });
-
   const delBtn = document.getElementById('deleteBtn');
   if (delBtn) {
     delBtn.addEventListener('click', () => {
@@ -529,17 +578,11 @@ function renderPost(id) {
       location.hash = '#/';
     });
   }
-
   const doComment = () => {
     const input = document.getElementById('commentInput');
     const content = input.value.trim();
     if (!content) return;
-    p.comments.push({
-      id: Date.now(),
-      author: '我',
-      content,
-      date: new Date().toISOString().slice(0, 10),
-    });
+    p.comments.push({ id: Date.now(), author: '我', content, date: new Date().toISOString().slice(0, 10) });
     persist();
     renderPost(p.id);
   };
@@ -553,20 +596,199 @@ function renderPost(id) {
 function renderUser(name) {
   const decoded = decodeURIComponent(name);
   const list = posts.filter(p => p.author === decoded).sort((a, b) => b.id - a.id);
+  const myColls = collections.filter(c => c.author === decoded);
   const isMe = decoded === '我';
 
   const listHTML = list.length
     ? list.map(postCardHTML).join('')
     : `<p class="empty">${isMe ? '你还没有发布文章' : 'TA 还没有发布文章'}</p>`;
 
+  const collHTML = myColls.length
+    ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>`
+    : `<p style="color:var(--text-3);font-size:14px;">${isMe ? '你还没有创建合集' : 'TA 还没有创建合集'}</p>`;
+
   app.innerHTML = `
     <div class="container">
       <a class="back" href="#/">← 返回首页</a>
       <h1>${escapeHTML(decoded)}</h1>
-      <p class="sub">${list.length} 篇文章</p>
+      <p class="sub">${list.length} 篇文章 · ${myColls.length} 个合集</p>
+
+      <div class="section-head">
+        <h2>合集</h2>
+        ${isMe ? `<a href="#/collection/new" class="mini-btn primary">+ 新建合集</a>` : ''}
+      </div>
+      ${collHTML}
+
+      <h2>文章</h2>
       ${listHTML}
     </div>
   `;
+}
+
+// ==================== 合集广场 ====================
+function renderCollections() {
+  const all = collections.slice().sort((a, b) => b.id - a.id);
+  const gridHTML = all.length
+    ? `<div class="collection-grid">${all.map(collectionCardHTML).join('')}</div>`
+    : `<p class="empty">还没有任何合集，去「我的主页」创建第一个吧</p>`;
+
+  app.innerHTML = `
+    <div class="container">
+      <a class="back" href="#/">← 返回首页</a>
+      <div class="section-head">
+        <h1 style="margin:0;">合集广场</h1>
+        <a href="#/collection/new" class="mini-btn primary">+ 新建合集</a>
+      </div>
+      <p class="sub">把相关的文章整理到一起，形成系列</p>
+      ${gridHTML}
+    </div>
+  `;
+}
+
+// ==================== 合集详情 ====================
+function renderCollection(id) {
+  const c = collections.find(x => x.id === Number(id));
+  if (!c) { app.innerHTML = `<div class="container"><p class="empty">合集不存在</p></div>`; return; }
+
+  const isMine = myCollectionIds.includes(c.id);
+  const list = posts.filter(p => p.collectionId === c.id).sort((a, b) => b.id - a.id);
+  const listHTML = list.length
+    ? list.map(postCardHTML).join('')
+    : `<p class="empty">这个合集下还没有文章，写文章时可以选择它</p>`;
+
+  app.innerHTML = `
+    <div class="container">
+      <a class="back" href="#/collections">← 合集广场</a>
+      <div class="collection-header">
+        <img class="ch-cover" src="${collectionCoverOf(c)}" alt="${escapeHTML(c.name)}" />
+        <div class="ch-info">
+          <h1>📚 ${escapeHTML(c.name)}</h1>
+          <p class="ch-desc">${escapeHTML(c.desc || '暂无简介')}</p>
+          <p class="ch-meta">
+            <a class="author-link" href="#/user/${encodeURIComponent(c.author)}">${escapeHTML(c.author)}</a>
+            · ${list.length} 篇文章
+          </p>
+          ${isMine ? `
+            <a href="#/collection/edit/${c.id}" class="mini-btn" style="display:inline-block;">编辑</a>
+            <span class="danger-text" id="delCollBtn" style="margin-left:12px;">删除合集</span>
+          ` : ''}
+        </div>
+      </div>
+      <h2>包含的文章</h2>
+      ${listHTML}
+    </div>
+  `;
+
+  const delBtn = document.getElementById('delCollBtn');
+  if (delBtn) {
+    delBtn.addEventListener('click', () => {
+      if (!confirm('删除合集不会删除文章，只会解除关联。确定？')) return;
+      posts.forEach(p => { if (p.collectionId === c.id) p.collectionId = null; });
+      collections = collections.filter(x => x.id !== c.id);
+      myCollectionIds = myCollectionIds.filter(x => x !== c.id);
+      persist();
+      location.hash = '#/collections';
+    });
+  }
+}
+
+// ==================== 创建 / 编辑合集 ====================
+let collectionCoverData = null;
+
+function renderCollectionEdit(editId) {
+  const editing = editId ? collections.find(x => x.id === Number(editId)) : null;
+  if (editId && !editing) {
+    app.innerHTML = `<div class="container"><p class="empty">合集不存在</p></div>`;
+    return;
+  }
+  collectionCoverData = null;
+
+  app.innerHTML = `
+    <div class="container">
+      <a class="back" href="${editing ? '#/collection/' + editing.id : '#/collections'}">← 返回</a>
+      <h1>${editing ? '编辑合集' : '新建合集'}</h1>
+      <p class="sub">合集是一组相关文章的集合，比如「旅行手记」「科幻短篇集」</p>
+
+      <div class="form-group">
+        <label>合集名称</label>
+        <input type="text" id="collName" placeholder="例如：科幻短篇集" value="${editing ? escapeHTML(editing.name) : ''}" />
+      </div>
+
+      <div class="form-group">
+        <label>简介（可选）</label>
+        <textarea id="collDesc" class="short" placeholder="简单描述这个合集">${editing ? escapeHTML(editing.desc || '') : ''}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>封面图（可选，会自动压缩）</label>
+        <div class="upload-box" id="collUploadBox">
+          ${editing && editing.cover
+            ? `<img src="${editing.cover}" alt="封面预览" />`
+            : `<div class="hint">点击选择图片</div>`}
+        </div>
+        <input type="file" id="collFileInput" accept="image/*" style="display:none" />
+      </div>
+
+      <div class="form-group">
+        <label>作者名</label>
+        <input type="text" id="collAuthor" value="${editing ? escapeHTML(editing.author) : '我'}" />
+      </div>
+
+      <button class="submit-btn" id="collSubmitBtn">${editing ? '保存修改' : '创建合集'}</button>
+      <button class="btn-secondary" id="collCancelBtn">取消</button>
+    </div>
+  `;
+
+  const uploadBox = document.getElementById('collUploadBox');
+  const fileInput = document.getElementById('collFileInput');
+  uploadBox.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    uploadBox.innerHTML = '<div class="hint">压缩中…</div>';
+    try {
+      collectionCoverData = await compressImage(file, 1200, 0.75);
+      uploadBox.innerHTML = `<img src="${collectionCoverData}" alt="封面预览" />`;
+    } catch (err) {
+      uploadBox.innerHTML = '<div class="hint">图片处理失败，请换一张</div>';
+      collectionCoverData = null;
+    }
+  });
+
+  document.getElementById('collSubmitBtn').addEventListener('click', () => {
+    const name = document.getElementById('collName').value.trim();
+    const desc = document.getElementById('collDesc').value.trim();
+    const author = document.getElementById('collAuthor').value.trim() || '匿名';
+
+    if (!name) return alert('请填写合集名称');
+
+    if (editing) {
+      editing.name = name;
+      editing.desc = desc;
+      editing.author = author;
+      if (collectionCoverData) editing.cover = collectionCoverData;
+      persist();
+      location.hash = '#/collection/' + editing.id;
+    } else {
+      const newId = collections.length ? Math.max(...collections.map(c => c.id)) + 1 : 1;
+      const coll = {
+        id: newId,
+        name,
+        desc,
+        author,
+        cover: collectionCoverData || ('https://picsum.photos/seed/coll' + newId + '/600/400'),
+        date: new Date().toISOString().slice(0, 10),
+      };
+      collections.push(coll);
+      myCollectionIds.push(newId);
+      persist();
+      location.hash = '#/collection/' + newId;
+    }
+  });
+
+  document.getElementById('collCancelBtn').addEventListener('click', () => {
+    history.back();
+  });
 }
 
 // ==================== 写 / 编辑文章 ====================
@@ -608,6 +830,12 @@ function renderWrite(editId) {
     `<span class="tag-choice ${selectedTags.includes(t.slug) ? 'active' : ''}" data-slug="${t.slug}">#${t.name}</span>`
   ).join('');
 
+  const myColls = collections.filter(c => myCollectionIds.includes(c.id));
+  const currentCollId = editing && editing.collectionId ? editing.collectionId : '';
+  const collOptions = myColls.map(c =>
+    `<option value="${c.id}" ${currentCollId === c.id ? 'selected' : ''}>📚 ${escapeHTML(c.name)}</option>`
+  ).join('');
+
   app.innerHTML = `
     <div class="container">
       <a class="back" href="${editing ? '#/post/' + editing.id : '#/'}">← 返回</a>
@@ -637,6 +865,17 @@ function renderWrite(editId) {
       <div class="form-group">
         <label>选择标签（可多选）</label>
         <div class="tag-choices" id="tagChoices">${tagChoices}</div>
+      </div>
+
+      <div class="form-group">
+        <label>加入合集（可选）</label>
+        <select id="collSelect">
+          <option value="">不加入合集</option>
+          ${collOptions}
+        </select>
+        ${myColls.length === 0
+          ? `<p style="font-size:13px;color:var(--text-3);margin-top:6px;">你还没有合集，<a href="#/collection/new" style="color:var(--primary);">点这里创建</a></p>`
+          : ''}
       </div>
 
       <div class="form-group">
@@ -681,6 +920,8 @@ function renderWrite(editId) {
     const title = document.getElementById('title').value.trim();
     const content = document.getElementById('content').value.trim();
     const author = document.getElementById('author').value.trim() || '匿名';
+    const collVal = document.getElementById('collSelect').value;
+    const collectionId = collVal ? Number(collVal) : null;
 
     if (!title) return alert('请填写标题');
     if (!content) return alert('请填写正文');
@@ -692,6 +933,7 @@ function renderWrite(editId) {
       editing.excerpt = content.slice(0, 60) + (content.length > 60 ? '……' : '');
       editing.author = author;
       editing.tags = selectedTags.slice();
+      editing.collectionId = collectionId;
       if (coverData) editing.cover = coverData;
       persist();
       location.hash = '#/post/' + editing.id;
@@ -708,6 +950,7 @@ function renderWrite(editId) {
         date: new Date().toISOString().slice(0, 10),
         likes: 0,
         comments: [],
+        collectionId,
       };
       posts.push(newPost);
       myPostIds.push(newId);
@@ -727,6 +970,10 @@ function router() {
   else if (parts[0] === 'tag' && parts[1]) renderTag(parts[1]);
   else if (parts[0] === 'post' && parts[1]) renderPost(parts[1]);
   else if (parts[0] === 'user' && parts[1]) renderUser(parts[1]);
+  else if (parts[0] === 'collections') renderCollections();
+  else if (parts[0] === 'collection' && parts[1] === 'new') renderCollectionEdit();
+  else if (parts[0] === 'collection' && parts[1] === 'edit' && parts[2]) renderCollectionEdit(parts[2]);
+  else if (parts[0] === 'collection' && parts[1]) renderCollection(parts[1]);
   else renderHome();
 
   window.scrollTo(0, 0);
@@ -737,4 +984,4 @@ router();
 </script>
 
 </body>
-</html>
+</html>vvvv
