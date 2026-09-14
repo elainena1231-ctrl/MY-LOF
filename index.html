@@ -8,30 +8,20 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: #fafafa;
-    color: #222;
-    line-height: 1.6;
+    background: #fafafa; color: #222; line-height: 1.6;
   }
   .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
   .header {
-    background: #fff;
-    border-bottom: 1px solid #eee;
-    padding: 16px 0;
-    position: sticky; top: 0; z-index: 10;
+    background: #fff; border-bottom: 1px solid #eee;
+    padding: 16px 0; position: sticky; top: 0; z-index: 10;
   }
   .header .container { padding: 0 16px; display: flex; align-items: center; gap: 16px; }
   .logo { font-size: 20px; font-weight: bold; color: #222; text-decoration: none; }
   .logo:hover { color: #ff5c5c; }
   .slogan { color: #bbb; font-size: 13px; }
   .write-btn {
-    margin-left: auto;
-    padding: 8px 18px;
-    background: #ff5c5c;
-    color: #fff;
-    border-radius: 999px;
-    text-decoration: none;
-    font-size: 14px;
-    transition: opacity .2s;
+    margin-left: auto; padding: 8px 18px; background: #ff5c5c; color: #fff;
+    border-radius: 999px; text-decoration: none; font-size: 14px; transition: opacity .2s;
   }
   .write-btn:hover { opacity: .85; }
   h1 { font-size: 26px; margin-bottom: 6px; }
@@ -39,29 +29,18 @@
   .sub { color: #999; margin-bottom: 24px; }
   .tags { display: flex; gap: 8px; flex-wrap: wrap; }
   .tag {
-    padding: 6px 14px;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 999px;
-    text-decoration: none;
-    color: #444;
-    font-size: 14px;
-    transition: all .2s;
+    padding: 6px 14px; background: #fff; border: 1px solid #eee;
+    border-radius: 999px; text-decoration: none; color: #444;
+    font-size: 14px; transition: all .2s;
   }
   .tag:hover { background: #ff5c5c; color: #fff; border-color: #ff5c5c; }
   .post {
-    display: flex; gap: 16px;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 14px;
-    text-decoration: none;
-    color: inherit;
-    transition: box-shadow .2s;
+    display: flex; gap: 16px; background: #fff; border: 1px solid #eee;
+    border-radius: 12px; padding: 12px; margin-bottom: 14px;
+    text-decoration: none; color: inherit; transition: box-shadow .2s;
   }
   .post:hover { box-shadow: 0 4px 16px rgba(0,0,0,.06); }
-  .post img { width: 160px; height: 110px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background:#eee; }
+  .post img { width: 160px; height: 110px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: #eee; }
   .post h3 { font-size: 16px; margin-bottom: 6px; }
   .post p { color: #666; font-size: 14px; margin-bottom: 8px; }
   .post .meta { font-size: 12px; color: #999; }
@@ -69,46 +48,85 @@
   .back:hover { color: #ff5c5c; }
   .empty { text-align: center; color: #999; padding: 60px 0; }
 
-  /* 写文章表单 */
+  /* 搜索栏 */
+  .search-bar { margin-bottom: 20px; }
+  .search-bar input {
+    width: 100%; padding: 12px 16px; border: 1px solid #eee; border-radius: 999px;
+    font-size: 15px; font-family: inherit; background: #fff; outline: none;
+  }
+  .search-bar input:focus { border-color: #ff5c5c; }
+
+  /* 排序切换 */
+  .sort-tabs { display: flex; gap: 16px; margin-bottom: 12px; }
+  .sort-tab {
+    font-size: 14px; color: #999; cursor: pointer; padding-bottom: 4px;
+    border-bottom: 2px solid transparent; transition: all .2s;
+  }
+  .sort-tab.active { color: #ff5c5c; border-bottom-color: #ff5c5c; }
+
+  /* 表单 */
   .form-group { margin-bottom: 20px; }
   .form-group label { display: block; font-size: 14px; color: #555; margin-bottom: 6px; font-weight: 500; }
-  .form-group input[type="text"],
-  .form-group textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    font-size: 15px;
-    font-family: inherit;
-    background: #fff;
-    outline: none;
+  .form-group input[type="text"], .form-group textarea {
+    width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 8px;
+    font-size: 15px; font-family: inherit; background: #fff; outline: none;
   }
-  .form-group input[type="text"]:focus,
-  .form-group textarea:focus { border-color: #ff5c5c; }
+  .form-group input[type="text"]:focus, .form-group textarea:focus { border-color: #ff5c5c; }
   .form-group textarea { min-height: 200px; resize: vertical; }
   .tag-choices { display: flex; gap: 8px; flex-wrap: wrap; }
   .tag-choice {
-    padding: 6px 14px;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 999px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all .2s;
+    padding: 6px 14px; background: #fff; border: 1px solid #eee;
+    border-radius: 999px; font-size: 14px; cursor: pointer; transition: all .2s;
   }
   .tag-choice:hover { border-color: #ff5c5c; }
   .tag-choice.active { background: #ff5c5c; color: #fff; border-color: #ff5c5c; }
   .submit-btn {
-    padding: 12px 32px;
-    background: #ff5c5c;
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: opacity .2s;
+    padding: 12px 32px; background: #ff5c5c; color: #fff; border: none;
+    border-radius: 999px; font-size: 15px; cursor: pointer; transition: opacity .2s;
   }
   .submit-btn:hover { opacity: .85; }
+  .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* 图片上传 */
+  .upload-box {
+    border: 2px dashed #eee; border-radius: 12px; padding: 24px;
+    text-align: center; cursor: pointer; transition: border-color .2s; background: #fff;
+  }
+  .upload-box:hover { border-color: #ff5c5c; }
+  .upload-box img { max-width: 100%; max-height: 260px; border-radius: 8px; }
+  .upload-box .hint { color: #999; font-size: 14px; }
+
+  /* 文章详情 */
+  .post-cover { width: 100%; border-radius: 12px; margin-bottom: 20px; }
+  .post-content { font-size: 16px; color: #444; }
+  .action-bar { display: flex; gap: 12px; margin: 28px 0; }
+  .action-btn {
+    padding: 10px 24px; background: #fff; border: 1px solid #eee; border-radius: 999px;
+    font-size: 15px; cursor: pointer; transition: all .2s; color: #444;
+  }
+  .action-btn:hover { border-color: #ff5c5c; color: #ff5c5c; }
+  .action-btn.liked { background: #ff5c5c; color: #fff; border-color: #ff5c5c; }
+  .action-btn.danger:hover { border-color: #e33; color: #e33; }
+
+  /* 评论区 */
+  .comments { margin-top: 32px; padding-top: 24px; border-top: 1px solid #eee; }
+  .comment-item {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 10px;
+  }
+  .comment-item .c-author { font-size: 13px; color: #999; margin-bottom: 4px; }
+  .comment-item .c-content { font-size: 15px; color: #333; }
+  .comment-form { display: flex; gap: 8px; margin-top: 16px; }
+  .comment-form input {
+    flex: 1; padding: 10px 14px; border: 1px solid #eee; border-radius: 999px;
+    font-size: 14px; font-family: inherit; outline: none;
+  }
+  .comment-form input:focus { border-color: #ff5c5c; }
+  .comment-form button {
+    padding: 10px 24px; background: #ff5c5c; color: #fff; border: none;
+    border-radius: 999px; font-size: 14px; cursor: pointer;
+  }
+  .comment-form button:hover { opacity: .85; }
 </style>
 </head>
 <body>
@@ -124,7 +142,7 @@
 <div id="app"></div>
 
 <script>
-// ============ 默认标签 ============
+// ==================== 默认数据 ====================
 const defaultTags = [
   { slug: 'illustration', name: '插画', desc: '手绘、板绘、原创插画' },
   { slug: 'photography', name: '摄影', desc: '人像、风景、街拍' },
@@ -132,74 +150,162 @@ const defaultTags = [
   { slug: 'design', name: '设计', desc: 'UI、平面、角色设计' },
 ];
 
-// ============ 默认文章 ============
 const defaultPosts = [
-  { id: 1, title: '我的第一张板绘', excerpt: '用 iPad 画的第一张原创角色，耗时 6 小时。', author: '小明', tags: ['illustration'], cover: 'https://picsum.photos/seed/1/600/400', date: '2026-09-10' },
-  { id: 2, title: '午后街拍记录', excerpt: '周末在城市老街区拍的一组照片。', author: '小红', tags: ['photography'], cover: 'https://picsum.photos/seed/2/600/400', date: '2026-09-11' },
-  { id: 3, title: '短篇：雨夜', excerpt: '一个关于雨夜的短篇小说。', author: '小刚', tags: ['writing'], cover: 'https://picsum.photos/seed/3/600/400', date: '2026-09-12' },
+  { id: 1, title: '我的第一张板绘', excerpt: '用 iPad 画的第一张原创角色，耗时 6 小时。', content: '用 iPad 画的第一张原创角色，耗时 6 小时。\n\n过程比想象中难，尤其是配色部分，改了好几版才满意。', author: '小明', tags: ['illustration'], cover: 'https://picsum.photos/seed/1/600/400', date: '2026-09-10', likes: 3, comments: [] },
+  { id: 2, title: '午后街拍记录', excerpt: '周末在城市老街区拍的一组照片。', content: '周末在城市老街区拍的一组照片。\n\n光线很好，随手拍都有感觉。', author: '小红', tags: ['photography'], cover: 'https://picsum.photos/seed/2/600/400', date: '2026-09-11', likes: 5, comments: [] },
+  { id: 3, title: '短篇：雨夜', excerpt: '一个关于雨夜的短篇小说。', content: '雨下了一整夜。\n\n他站在窗前，看着楼下的路灯在水洼里碎成一片片光。', author: '小刚', tags: ['writing'], cover: 'https://picsum.photos/seed/3/600/400', date: '2026-09-12', likes: 2, comments: [] },
 ];
 
-// ============ 从本地存储读取，没有就用默认 ============
-function loadPosts() {
-  const raw = localStorage.getItem('my_posts');
-  return raw ? JSON.parse(raw) : defaultPosts.slice();
+// ==================== 本地存储 ====================
+const KEY_POSTS = 'my_posts';
+const KEY_LIKES = 'my_likes';
+const KEY_MINE = 'my_post_ids';
+
+function loadJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) { return fallback; }
 }
-function savePosts(list) {
-  localStorage.setItem('my_posts', JSON.stringify(list));
+function saveJSON(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); }
+  catch (e) { alert('本地存储已满，请删除一些带图片的文章再试。'); }
 }
 
 let tags = defaultTags;
-let posts = loadPosts();
+let posts = loadJSON(KEY_POSTS, defaultPosts.slice());
+let myLikes = loadJSON(KEY_LIKES, []);      // 我点赞过的文章 id
+let myPostIds = loadJSON(KEY_MINE, []);     // 我发布的文章 id
+
+// 兼容旧数据
+posts.forEach(p => { if (!p.likes) p.likes = 0; if (!p.comments) p.comments = []; });
+
+function persist() {
+  saveJSON(KEY_POSTS, posts);
+  saveJSON(KEY_LIKES, myLikes);
+  saveJSON(KEY_MINE, myPostIds);
+}
 
 const app = document.getElementById('app');
 
-// ============ 首页 ============
+// ==================== 工具 ====================
+function escapeHTML(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+function coverOf(p) {
+  return p.cover || ('https://picsum.photos/seed/' + p.id + '/600/400');
+}
+function formatDate(d) {
+  return d || '';
+}
+function postCardHTML(p) {
+  return `
+    <a class="post" href="#/post/${p.id}">
+      <img src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
+      <div>
+        <h3>${escapeHTML(p.title)}</h3>
+        <p>${escapeHTML(p.excerpt)}</p>
+        <span class="meta">${escapeHTML(p.author)} · ${formatDate(p.date)} · ♡ ${p.likes} · 💬 ${p.comments.length}</span>
+      </div>
+    </a>
+  `;
+}
+
+// ==================== 首页 ====================
+let homeSort = 'new';   // new | hot
+let homeKeyword = '';
+
 function renderHome() {
   const tagHTML = tags.map(t =>
     `<a class="tag" href="#/tag/${t.slug}">#${t.name}</a>`
   ).join('');
 
-  const sorted = posts.slice().sort((a, b) => b.id - a.id);
-  const postHTML = sorted.map(p =>
-    `<a class="post" href="#/post/${p.id}">
-      <img src="${p.cover || 'https://picsum.photos/seed/' + p.id + '/600/400'}" alt="${p.title}" />
-      <div>
-        <h3>${escapeHTML(p.title)}</h3>
-        <p>${escapeHTML(p.excerpt)}</p>
-        <span class="meta">${escapeHTML(p.author)} · ${p.date}</span>
-      </div>
-    </a>`
-  ).join('');
+  let list = posts.slice();
+
+  // 搜索过滤
+  const kw = homeKeyword.trim().toLowerCase();
+  if (kw) {
+    list = list.filter(p =>
+      p.title.toLowerCase().includes(kw) ||
+      (p.content || '').toLowerCase().includes(kw) ||
+      p.author.toLowerCase().includes(kw) ||
+      p.tags.some(s => {
+        const t = tags.find(x => x.slug === s);
+        return t && (t.name.includes(kw) || s.includes(kw));
+      })
+    );
+  }
+
+  // 排序
+  if (homeSort === 'hot') {
+    list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
+  } else {
+    list.sort((a, b) => b.id - a.id);
+  }
+
+  const listHTML = list.length
+    ? list.map(postCardHTML).join('')
+    : `<p class="empty">${kw ? '没有找到匹配的文章' : '还没有文章，点右上角写一篇吧'}</p>`;
 
   app.innerHTML = `
     <div class="container">
       <h1>发现好内容</h1>
       <p class="sub">按标签找到你感兴趣的内容</p>
+
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="搜索标题、正文、作者或标签…" value="${escapeHTML(homeKeyword)}" />
+      </div>
+
       <h2>热门标签</h2>
       <div class="tags">${tagHTML}</div>
-      <h2>最新文章</h2>
-      ${postHTML || '<p class="empty">还没有文章，点右上角写一篇吧</p>'}
+
+      <h2>文章</h2>
+      <div class="sort-tabs">
+        <span class="sort-tab ${homeSort === 'new' ? 'active' : ''}" data-sort="new">最新</span>
+        <span class="sort-tab ${homeSort === 'hot' ? 'active' : ''}" data-sort="hot">热门</span>
+      </div>
+      ${listHTML}
     </div>
   `;
+
+  // 搜索框事件
+  const input = document.getElementById('searchInput');
+  input.addEventListener('input', e => {
+    homeKeyword = e.target.value;
+    const pos = e.target.selectionStart;
+    renderHome();
+    const ni = document.getElementById('searchInput');
+    ni.focus();
+    ni.setSelectionRange(pos, pos);
+  });
+
+  // 排序切换
+  document.querySelectorAll('.sort-tab').forEach(el => {
+    el.addEventListener('click', () => {
+      homeSort = el.dataset.sort;
+      renderHome();
+    });
+  });
 }
 
-// ============ 标签页 ============
+// ==================== 标签页 ====================
+let tagSort = 'new';
+
 function renderTag(slug) {
   const tag = tags.find(t => t.slug === slug);
   if (!tag) { app.innerHTML = `<div class="container"><p class="empty">标签不存在</p></div>`; return; }
 
-  const list = posts.filter(p => p.tags.includes(slug)).sort((a, b) => b.id - a.id);
-  const postHTML = list.length
-    ? list.map(p =>
-        `<a class="post" href="#/post/${p.id}">
-          <img src="${p.cover || 'https://picsum.photos/seed/' + p.id + '/600/400'}" alt="${p.title}" />
-          <div>
-            <h3>${escapeHTML(p.title)}</h3>
-            <p>${escapeHTML(p.excerpt)}</p>
-            <span class="meta">${escapeHTML(p.author)} · ${p.date}</span>
-          </div>
-        </a>`
-      ).join('')
+  let list = posts.filter(p => p.tags.includes(slug));
+  if (tagSort === 'hot') {
+    list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
+  } else {
+    list.sort((a, b) => b.id - a.id);
+  }
+
+  const listHTML = list.length
+    ? list.map(postCardHTML).join('')
     : `<p class="empty">这个标签下还没有文章</p>`;
 
   app.innerHTML = `
@@ -207,12 +313,24 @@ function renderTag(slug) {
       <a class="back" href="#/">← 返回首页</a>
       <h1>#${tag.name}</h1>
       <p class="sub">${tag.desc} · ${list.length} 篇文章</p>
-      ${postHTML}
+
+      <div class="sort-tabs">
+        <span class="sort-tab ${tagSort === 'new' ? 'active' : ''}" data-sort="new">最新</span>
+        <span class="sort-tab ${tagSort === 'hot' ? 'active' : ''}" data-sort="hot">热门</span>
+      </div>
+      ${listHTML}
     </div>
   `;
+
+  document.querySelectorAll('.sort-tab').forEach(el => {
+    el.addEventListener('click', () => {
+      tagSort = el.dataset.sort;
+      renderTag(slug);
+    });
+  });
 }
 
-// ============ 文章详情 ============
+// ==================== 文章详情 ====================
 function renderPost(id) {
   const p = posts.find(x => x.id === Number(id));
   if (!p) { app.innerHTML = `<div class="container"><p class="empty">文章不存在</p></div>`; return; }
@@ -222,23 +340,120 @@ function renderPost(id) {
     return t ? `<a class="tag" href="#/tag/${t.slug}">#${t.name}</a>` : '';
   }).join('');
 
+  const liked = myLikes.includes(p.id);
+  const isMine = myPostIds.includes(p.id);
+
+  const commentsHTML = p.comments.length
+    ? p.comments.map(c => `
+        <div class="comment-item">
+          <div class="c-author">${escapeHTML(c.author)} · ${c.date}</div>
+          <div class="c-content">${escapeHTML(c.content)}</div>
+        </div>
+      `).join('')
+    : `<p style="color:#999;font-size:14px;">还没有评论，来说两句吧</p>`;
+
   app.innerHTML = `
     <div class="container">
       <a class="back" href="#/">← 返回首页</a>
       <h1>${escapeHTML(p.title)}</h1>
       <p class="sub">${escapeHTML(p.author)} · ${p.date}</p>
-      <img src="${p.cover || 'https://picsum.photos/seed/' + p.id + '/600/400'}" style="width:100%;border-radius:12px;margin-bottom:20px;" />
-      <p style="font-size:16px;color:#444;">${escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>')}</p>
+      <img class="post-cover" src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
+      <div class="post-content">${escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>')}</div>
+
       <div class="tags" style="margin-top:24px;">${tagHTML}</div>
+
+      <div class="action-bar">
+        <button class="action-btn ${liked ? 'liked' : ''}" id="likeBtn">
+          ${liked ? '♥' : '♡'} 点赞 ${p.likes}
+        </button>
+        ${isMine ? `<button class="action-btn danger" id="deleteBtn">删除文章</button>` : ''}
+      </div>
+
+      <div class="comments">
+        <h2 style="margin-top:0;">评论 (${p.comments.length})</h2>
+        <div id="commentList">${commentsHTML}</div>
+        <div class="comment-form">
+          <input type="text" id="commentInput" placeholder="写下你的评论…" />
+          <button id="commentBtn">发送</button>
+        </div>
+      </div>
     </div>
   `;
+
+  // 点赞
+  document.getElementById('likeBtn').addEventListener('click', () => {
+    if (myLikes.includes(p.id)) {
+      myLikes = myLikes.filter(x => x !== p.id);
+      p.likes = Math.max(0, p.likes - 1);
+    } else {
+      myLikes.push(p.id);
+      p.likes += 1;
+    }
+    persist();
+    renderPost(p.id);
+  });
+
+  // 删除
+  const delBtn = document.getElementById('deleteBtn');
+  if (delBtn) {
+    delBtn.addEventListener('click', () => {
+      if (!confirm('确定删除这篇文章吗？')) return;
+      posts = posts.filter(x => x.id !== p.id);
+      myPostIds = myPostIds.filter(x => x !== p.id);
+      myLikes = myLikes.filter(x => x !== p.id);
+      persist();
+      location.hash = '#/';
+    });
+  }
+
+  // 发表评论
+  const doComment = () => {
+    const input = document.getElementById('commentInput');
+    const content = input.value.trim();
+    if (!content) return;
+    p.comments.push({
+      id: Date.now(),
+      author: '我',
+      content,
+      date: new Date().toISOString().slice(0, 10),
+    });
+    persist();
+    renderPost(p.id);
+  };
+  document.getElementById('commentBtn').addEventListener('click', doComment);
+  document.getElementById('commentInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doComment();
+  });
 }
 
-// ============ 写文章页 ============
+// ==================== 写文章 ====================
 let selectedTags = [];
+let coverData = null;
+
+function compressImage(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 function renderWrite() {
   selectedTags = [];
+  coverData = null;
 
   const tagChoices = tags.map(t =>
     `<span class="tag-choice" data-slug="${t.slug}">#${t.name}</span>`
@@ -256,6 +471,14 @@ function renderWrite() {
       </div>
 
       <div class="form-group">
+        <label>封面图（可选，会自动压缩）</label>
+        <div class="upload-box" id="uploadBox">
+          <div class="hint">点击选择图片</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" />
+      </div>
+
+      <div class="form-group">
         <label>正文</label>
         <textarea id="content" placeholder="写点什么吧……"></textarea>
       </div>
@@ -267,14 +490,14 @@ function renderWrite() {
 
       <div class="form-group">
         <label>作者名</label>
-        <input type="text" id="author" placeholder="你的名字" value="我" />
+        <input type="text" id="author" value="我" />
       </div>
 
       <button class="submit-btn" id="submitBtn">发布</button>
     </div>
   `;
 
-  // 标签点击切换
+  // 标签选择
   document.querySelectorAll('.tag-choice').forEach(el => {
     el.addEventListener('click', () => {
       const slug = el.dataset.slug;
@@ -288,15 +511,32 @@ function renderWrite() {
     });
   });
 
+  // 图片上传
+  const uploadBox = document.getElementById('uploadBox');
+  const fileInput = document.getElementById('fileInput');
+  uploadBox.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    uploadBox.innerHTML = '<div class="hint">压缩中…</div>';
+    try {
+      coverData = await compressImage(file, 1200, 0.75);
+      uploadBox.innerHTML = `<img src="${coverData}" alt="封面预览" />`;
+    } catch (err) {
+      uploadBox.innerHTML = '<div class="hint">图片处理失败，请换一张</div>';
+      coverData = null;
+    }
+  });
+
   // 发布
   document.getElementById('submitBtn').addEventListener('click', () => {
     const title = document.getElementById('title').value.trim();
     const content = document.getElementById('content').value.trim();
     const author = document.getElementById('author').value.trim() || '匿名';
 
-    if (!title) { alert('请填写标题'); return; }
-    if (!content) { alert('请填写正文'); return; }
-    if (selectedTags.length === 0) { alert('请至少选择一个标签'); return; }
+    if (!title) return alert('请填写标题');
+    if (!content) return alert('请填写正文');
+    if (selectedTags.length === 0) return alert('请至少选择一个标签');
 
     const newId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
     const newPost = {
@@ -306,24 +546,20 @@ function renderWrite() {
       content,
       author,
       tags: selectedTags,
-      cover: 'https://picsum.photos/seed/' + newId + '/600/400',
+      cover: coverData || ('https://picsum.photos/seed/' + newId + '/600/400'),
       date: new Date().toISOString().slice(0, 10),
+      likes: 0,
+      comments: [],
     };
 
     posts.push(newPost);
-    savePosts(posts);
+    myPostIds.push(newId);
+    persist();
     location.hash = '#/post/' + newId;
   });
 }
 
-// ============ 工具 ============
-function escapeHTML(str) {
-  return String(str).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
-}
-
-// ============ 路由 ============
+// ==================== 路由 ====================
 function router() {
   const hash = location.hash || '#/';
   const parts = hash.slice(2).split('/');
