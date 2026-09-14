@@ -176,13 +176,11 @@
     padding: 6px 16px; font-size: 13px;
     background: var(--card); border: 1px solid var(--border);
     border-radius: 999px; color: var(--text-2); cursor: pointer;
-    text-decoration: none; transition: all .2s;
+    text-decoration: none; transition: all .2s; display: inline-block;
   }
   .mini-btn:hover { border-color: var(--primary); color: var(--primary); }
   .mini-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
   .mini-btn.primary:hover { opacity: .85; color: #fff; }
-
-  /* 合集卡片网格 */
   .collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
   .collection-card {
     display: block; background: var(--card); border: 1px solid var(--border);
@@ -197,8 +195,6 @@
   .collection-body { padding: 12px 14px; }
   .collection-body h3 { font-size: 15px; margin-bottom: 4px; color: var(--text); }
   .collection-body p { font-size: 13px; color: var(--text-3); }
-
-  /* 合集详情头部 */
   .collection-header {
     display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;
     margin-bottom: 24px;
@@ -212,6 +208,37 @@
   .collection-header .ch-desc { color: var(--text-2); font-size: 14px; margin-bottom: 12px; }
   .collection-header .ch-meta { color: var(--text-3); font-size: 13px; margin-bottom: 12px; }
   .danger-text { color: #e33; font-size: 13px; cursor: pointer; text-decoration: underline; }
+
+  /* Modal */
+  .modal-mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+    animation: fadeIn .15s;
+  }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  .modal {
+    background: var(--card); border-radius: 16px; padding: 24px;
+    max-width: 440px; width: 100%; max-height: 82vh; overflow-y: auto;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  }
+  .modal h3 { font-size: 18px; margin-bottom: 6px; }
+  .modal .modal-sub { font-size: 13px; color: var(--text-3); margin-bottom: 16px; }
+  .coll-list { margin-bottom: 16px; max-height: 340px; overflow-y: auto; }
+  .coll-option {
+    padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 8px; cursor: pointer; transition: all .2s;
+    background: var(--card);
+  }
+  .coll-option:hover { border-color: var(--primary); }
+  .coll-option.selected { border-color: var(--primary); background: var(--hover-bg); }
+  .coll-option.selected .coll-option-name::after {
+    content: ' ✓'; color: var(--primary); font-weight: bold;
+  }
+  .coll-option-name { font-size: 15px; color: var(--text); margin-bottom: 2px; }
+  .coll-option-meta { font-size: 12px; color: var(--text-3); }
+  .modal-actions { display: flex; gap: 8px; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -278,6 +305,10 @@ posts.forEach(p => {
   if (!p.likes) p.likes = 0;
   if (!p.comments) p.comments = [];
   if (p.collectionId === undefined) p.collectionId = null;
+  // 清理指向已删除合集的引用
+  if (p.collectionId && !collections.find(c => c.id === p.collectionId)) {
+    p.collectionId = null;
+  }
 });
 
 function persist() {
@@ -391,7 +422,6 @@ function renderHome() {
     listHTML = list.map(postCardHTML).join('');
   }
 
-  // 热门合集
   const hotColls = collections.slice().sort((a, b) => {
     const ca = posts.filter(p => p.collectionId === a.id).length;
     const cb = posts.filter(p => p.collectionId === b.id).length;
@@ -495,6 +525,68 @@ function renderTag(slug) {
   });
 }
 
+// ==================== 合集选择弹窗 ====================
+function showCollectionPicker(p) {
+  const myColls = collections.filter(c => myCollectionIds.includes(c.id));
+
+  const optionsHTML = myColls.length
+    ? myColls.map(c => {
+        const count = posts.filter(x => x.collectionId === c.id).length;
+        const selected = p.collectionId === c.id ? 'selected' : '';
+        return `
+          <div class="coll-option ${selected}" data-id="${c.id}">
+            <div class="coll-option-name">📚 ${escapeHTML(c.name)}</div>
+            <div class="coll-option-meta">${count} 篇文章</div>
+          </div>
+        `;
+      }).join('')
+    : `<p style="color:var(--text-3);font-size:14px;text-align:center;padding:16px 0;">你还没有创建合集</p>`;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-mask';
+  modal.innerHTML = `
+    <div class="modal">
+      <h3>把文章加入合集</h3>
+      <p class="modal-sub">选择要加入的合集。同一篇文章只能在一个合集里。</p>
+      <div class="coll-list">
+        <div class="coll-option ${!p.collectionId ? 'selected' : ''}" data-id="">
+          <div class="coll-option-name">不加入合集</div>
+          <div class="coll-option-meta">保持独立文章</div>
+        </div>
+        ${optionsHTML}
+      </div>
+      <div class="modal-actions">
+        <a href="#/collection/new" class="mini-btn" id="createCollBtn">+ 新建合集</a>
+        <button class="mini-btn" id="modalCancel">取消</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // 点击遮罩关闭
+  modal.addEventListener('click', e => {
+    if (e.target === modal) modal.remove();
+  });
+
+  // 选择
+  modal.querySelectorAll('.coll-option').forEach(el => {
+    el.addEventListener('click', () => {
+      const cid = el.dataset.id ? Number(el.dataset.id) : null;
+      p.collectionId = cid;
+      persist();
+      modal.remove();
+      renderPost(p.id);
+    });
+  });
+
+  // 取消
+  modal.querySelector('#modalCancel').addEventListener('click', () => modal.remove());
+
+  // 新建合集：先关闭弹窗，路由会跳转
+  modal.querySelector('#createCollBtn').addEventListener('click', () => modal.remove());
+}
+
 // ==================== 文章详情 ====================
 function renderPost(id) {
   const p = posts.find(x => x.id === Number(id));
@@ -506,6 +598,9 @@ function renderPost(id) {
   const liked = myLikes.includes(p.id);
   const isMine = myPostIds.includes(p.id);
   const coll = p.collectionId ? collections.find(c => c.id === p.collectionId) : null;
+
+  // 合集按钮文案
+  const collBtnText = coll ? '📚 更换合集' : '📚 加入合集';
 
   const collHTML = coll
     ? `<a href="#/collection/${coll.id}" style="display:inline-block;margin-top:20px;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text-2);font-size:14px;transition:border-color .2s;">
@@ -539,6 +634,7 @@ function renderPost(id) {
         <button class="action-btn ${liked ? 'liked' : ''}" id="likeBtn">
           ${liked ? '♥' : '♡'} 点赞 ${p.likes}
         </button>
+        ${isMine ? `<button class="action-btn" id="collBtn">${collBtnText}</button>` : ''}
         ${isMine ? `<button class="action-btn" id="editBtn">编辑</button>` : ''}
         ${isMine ? `<button class="action-btn danger" id="deleteBtn">删除文章</button>` : ''}
       </div>
@@ -565,8 +661,13 @@ function renderPost(id) {
     persist();
     renderPost(p.id);
   });
+
+  const collBtn = document.getElementById('collBtn');
+  if (collBtn) collBtn.addEventListener('click', () => showCollectionPicker(p));
+
   const editBtn = document.getElementById('editBtn');
   if (editBtn) editBtn.addEventListener('click', () => { location.hash = '#/edit/' + p.id; });
+
   const delBtn = document.getElementById('deleteBtn');
   if (delBtn) {
     delBtn.addEventListener('click', () => {
@@ -578,6 +679,7 @@ function renderPost(id) {
       location.hash = '#/';
     });
   }
+
   const doComment = () => {
     const input = document.getElementById('commentInput');
     const content = input.value.trim();
@@ -654,7 +756,7 @@ function renderCollection(id) {
   const list = posts.filter(p => p.collectionId === c.id).sort((a, b) => b.id - a.id);
   const listHTML = list.length
     ? list.map(postCardHTML).join('')
-    : `<p class="empty">这个合集下还没有文章，写文章时可以选择它</p>`;
+    : `<p class="empty">这个合集下还没有文章，可以在文章详情页点「📚 加入合集」</p>`;
 
   app.innerHTML = `
     <div class="container">
@@ -786,9 +888,7 @@ function renderCollectionEdit(editId) {
     }
   });
 
-  document.getElementById('collCancelBtn').addEventListener('click', () => {
-    history.back();
-  });
+  document.getElementById('collCancelBtn').addEventListener('click', () => history.back());
 }
 
 // ==================== 写 / 编辑文章 ====================
@@ -984,4 +1084,4 @@ router();
 </script>
 
 </body>
-</html>vvvv
+</html>
