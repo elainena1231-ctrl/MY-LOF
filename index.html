@@ -23,6 +23,17 @@
   .logo { font-size: 20px; font-weight: bold; color: #222; text-decoration: none; }
   .logo:hover { color: #ff5c5c; }
   .slogan { color: #bbb; font-size: 13px; }
+  .write-btn {
+    margin-left: auto;
+    padding: 8px 18px;
+    background: #ff5c5c;
+    color: #fff;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: opacity .2s;
+  }
+  .write-btn:hover { opacity: .85; }
   h1 { font-size: 26px; margin-bottom: 6px; }
   h2 { font-size: 18px; margin: 24px 0 12px; }
   .sub { color: #999; margin-bottom: 24px; }
@@ -50,13 +61,54 @@
     transition: box-shadow .2s;
   }
   .post:hover { box-shadow: 0 4px 16px rgba(0,0,0,.06); }
-  .post img { width: 160px; height: 110px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+  .post img { width: 160px; height: 110px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background:#eee; }
   .post h3 { font-size: 16px; margin-bottom: 6px; }
   .post p { color: #666; font-size: 14px; margin-bottom: 8px; }
   .post .meta { font-size: 12px; color: #999; }
   .back { color: #666; font-size: 14px; text-decoration: none; display: inline-block; margin-bottom: 16px; }
   .back:hover { color: #ff5c5c; }
   .empty { text-align: center; color: #999; padding: 60px 0; }
+
+  /* 写文章表单 */
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; font-size: 14px; color: #555; margin-bottom: 6px; font-weight: 500; }
+  .form-group input[type="text"],
+  .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    outline: none;
+  }
+  .form-group input[type="text"]:focus,
+  .form-group textarea:focus { border-color: #ff5c5c; }
+  .form-group textarea { min-height: 200px; resize: vertical; }
+  .tag-choices { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag-choice {
+    padding: 6px 14px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .tag-choice:hover { border-color: #ff5c5c; }
+  .tag-choice.active { background: #ff5c5c; color: #fff; border-color: #ff5c5c; }
+  .submit-btn {
+    padding: 12px 32px;
+    background: #ff5c5c;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .submit-btn:hover { opacity: .85; }
 </style>
 </head>
 <body>
@@ -65,41 +117,56 @@
   <div class="container">
     <a href="#/" class="logo">我的创作社区</a>
     <span class="slogan">标签社区 · 图文创作</span>
+    <a href="#/write" class="write-btn">✏️ 写文章</a>
   </div>
 </div>
 
 <div id="app"></div>
 
 <script>
-const tags = [
+// ============ 默认标签 ============
+const defaultTags = [
   { slug: 'illustration', name: '插画', desc: '手绘、板绘、原创插画' },
   { slug: 'photography', name: '摄影', desc: '人像、风景、街拍' },
   { slug: 'writing', name: '写作', desc: '小说、随笔、散文' },
   { slug: 'design', name: '设计', desc: 'UI、平面、角色设计' },
 ];
 
-const posts = [
+// ============ 默认文章 ============
+const defaultPosts = [
   { id: 1, title: '我的第一张板绘', excerpt: '用 iPad 画的第一张原创角色，耗时 6 小时。', author: '小明', tags: ['illustration'], cover: 'https://picsum.photos/seed/1/600/400', date: '2026-09-10' },
   { id: 2, title: '午后街拍记录', excerpt: '周末在城市老街区拍的一组照片。', author: '小红', tags: ['photography'], cover: 'https://picsum.photos/seed/2/600/400', date: '2026-09-11' },
   { id: 3, title: '短篇：雨夜', excerpt: '一个关于雨夜的短篇小说。', author: '小刚', tags: ['writing'], cover: 'https://picsum.photos/seed/3/600/400', date: '2026-09-12' },
-  { id: 4, title: '角色设计练习', excerpt: '这周的角色设计练习合集。', author: '小明', tags: ['illustration', 'design'], cover: 'https://picsum.photos/seed/4/600/400', date: '2026-09-13' },
-  { id: 5, title: 'UI 配色灵感', excerpt: '整理了一些最近喜欢的配色方案。', author: '小红', tags: ['design'], cover: 'https://picsum.photos/seed/5/600/400', date: '2026-09-14' },
 ];
+
+// ============ 从本地存储读取，没有就用默认 ============
+function loadPosts() {
+  const raw = localStorage.getItem('my_posts');
+  return raw ? JSON.parse(raw) : defaultPosts.slice();
+}
+function savePosts(list) {
+  localStorage.setItem('my_posts', JSON.stringify(list));
+}
+
+let tags = defaultTags;
+let posts = loadPosts();
 
 const app = document.getElementById('app');
 
+// ============ 首页 ============
 function renderHome() {
   const tagHTML = tags.map(t =>
     `<a class="tag" href="#/tag/${t.slug}">#${t.name}</a>`
   ).join('');
 
-  const postHTML = posts.map(p =>
+  const sorted = posts.slice().sort((a, b) => b.id - a.id);
+  const postHTML = sorted.map(p =>
     `<a class="post" href="#/post/${p.id}">
-      <img src="${p.cover}" alt="${p.title}" />
+      <img src="${p.cover || 'https://picsum.photos/seed/' + p.id + '/600/400'}" alt="${p.title}" />
       <div>
-        <h3>${p.title}</h3>
-        <p>${p.excerpt}</p>
-        <span class="meta">${p.author} · ${p.date}</span>
+        <h3>${escapeHTML(p.title)}</h3>
+        <p>${escapeHTML(p.excerpt)}</p>
+        <span class="meta">${escapeHTML(p.author)} · ${p.date}</span>
       </div>
     </a>`
   ).join('');
@@ -111,24 +178,25 @@ function renderHome() {
       <h2>热门标签</h2>
       <div class="tags">${tagHTML}</div>
       <h2>最新文章</h2>
-      ${postHTML}
+      ${postHTML || '<p class="empty">还没有文章，点右上角写一篇吧</p>'}
     </div>
   `;
 }
 
+// ============ 标签页 ============
 function renderTag(slug) {
   const tag = tags.find(t => t.slug === slug);
   if (!tag) { app.innerHTML = `<div class="container"><p class="empty">标签不存在</p></div>`; return; }
 
-  const list = posts.filter(p => p.tags.includes(slug));
+  const list = posts.filter(p => p.tags.includes(slug)).sort((a, b) => b.id - a.id);
   const postHTML = list.length
     ? list.map(p =>
         `<a class="post" href="#/post/${p.id}">
-          <img src="${p.cover}" alt="${p.title}" />
+          <img src="${p.cover || 'https://picsum.photos/seed/' + p.id + '/600/400'}" alt="${p.title}" />
           <div>
-            <h3>${p.title}</h3>
-            <p>${p.excerpt}</p>
-            <span class="meta">${p.author} · ${p.date}</span>
+            <h3>${escapeHTML(p.title)}</h3>
+            <p>${escapeHTML(p.excerpt)}</p>
+            <span class="meta">${escapeHTML(p.author)} · ${p.date}</span>
           </div>
         </a>`
       ).join('')
@@ -144,6 +212,7 @@ function renderTag(slug) {
   `;
 }
 
+// ============ 文章详情 ============
 function renderPost(id) {
   const p = posts.find(x => x.id === Number(id));
   if (!p) { app.innerHTML = `<div class="container"><p class="empty">文章不存在</p></div>`; return; }
@@ -156,21 +225,111 @@ function renderPost(id) {
   app.innerHTML = `
     <div class="container">
       <a class="back" href="#/">← 返回首页</a>
-      <h1>${p.title}</h1>
-      <p class="sub">${p.author} · ${p.date}</p>
-      <img src="${p.cover}" style="width:100%;border-radius:12px;margin-bottom:20px;" />
-      <p style="font-size:16px;color:#444;">${p.excerpt}</p>
-      <p style="font-size:16px;color:#444;margin-top:12px;">这里是文章正文内容。后面我们会加上真正的编辑器。</p>
+      <h1>${escapeHTML(p.title)}</h1>
+      <p class="sub">${escapeHTML(p.author)} · ${p.date}</p>
+      <img src="${p.cover || 'https://picsum.photos/seed/' + p.id + '/600/400'}" style="width:100%;border-radius:12px;margin-bottom:20px;" />
+      <p style="font-size:16px;color:#444;">${escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>')}</p>
       <div class="tags" style="margin-top:24px;">${tagHTML}</div>
     </div>
   `;
 }
 
+// ============ 写文章页 ============
+let selectedTags = [];
+
+function renderWrite() {
+  selectedTags = [];
+
+  const tagChoices = tags.map(t =>
+    `<span class="tag-choice" data-slug="${t.slug}">#${t.name}</span>`
+  ).join('');
+
+  app.innerHTML = `
+    <div class="container">
+      <a class="back" href="#/">← 返回首页</a>
+      <h1>写文章</h1>
+      <p class="sub">填写下面的内容，发布后会出现在首页</p>
+
+      <div class="form-group">
+        <label>标题</label>
+        <input type="text" id="title" placeholder="给你的文章起个标题" />
+      </div>
+
+      <div class="form-group">
+        <label>正文</label>
+        <textarea id="content" placeholder="写点什么吧……"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>选择标签（可多选）</label>
+        <div class="tag-choices" id="tagChoices">${tagChoices}</div>
+      </div>
+
+      <div class="form-group">
+        <label>作者名</label>
+        <input type="text" id="author" placeholder="你的名字" value="我" />
+      </div>
+
+      <button class="submit-btn" id="submitBtn">发布</button>
+    </div>
+  `;
+
+  // 标签点击切换
+  document.querySelectorAll('.tag-choice').forEach(el => {
+    el.addEventListener('click', () => {
+      const slug = el.dataset.slug;
+      if (selectedTags.includes(slug)) {
+        selectedTags = selectedTags.filter(s => s !== slug);
+        el.classList.remove('active');
+      } else {
+        selectedTags.push(slug);
+        el.classList.add('active');
+      }
+    });
+  });
+
+  // 发布
+  document.getElementById('submitBtn').addEventListener('click', () => {
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+    const author = document.getElementById('author').value.trim() || '匿名';
+
+    if (!title) { alert('请填写标题'); return; }
+    if (!content) { alert('请填写正文'); return; }
+    if (selectedTags.length === 0) { alert('请至少选择一个标签'); return; }
+
+    const newId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
+    const newPost = {
+      id: newId,
+      title,
+      excerpt: content.slice(0, 60) + (content.length > 60 ? '……' : ''),
+      content,
+      author,
+      tags: selectedTags,
+      cover: 'https://picsum.photos/seed/' + newId + '/600/400',
+      date: new Date().toISOString().slice(0, 10),
+    };
+
+    posts.push(newPost);
+    savePosts(posts);
+    location.hash = '#/post/' + newId;
+  });
+}
+
+// ============ 工具 ============
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+// ============ 路由 ============
 function router() {
   const hash = location.hash || '#/';
   const parts = hash.slice(2).split('/');
 
-  if (parts[0] === 'tag' && parts[1]) renderTag(parts[1]);
+  if (parts[0] === 'write') renderWrite();
+  else if (parts[0] === 'tag' && parts[1]) renderTag(parts[1]);
   else if (parts[0] === 'post' && parts[1]) renderPost(parts[1]);
   else renderHome();
 
