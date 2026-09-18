@@ -100,9 +100,7 @@
     background: var(--card); color: var(--text); outline: none;
   }
   .search-bar input:focus { border-color: var(--primary); }
-  .search-big input {
-    padding: 16px 22px; font-size: 17px;
-  }
+  .search-big input { padding: 16px 22px; font-size: 17px; }
   .tabs { display: flex; gap: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
   .tab {
     font-size: 14px; color: var(--text-3); cursor: pointer;
@@ -338,6 +336,14 @@
   .search-empty-hint .hint-line { font-size: 15px; margin-bottom: 8px; }
   .search-empty-hint .small { font-size: 13px; }
   .highlight { background: rgba(255,92,92,.18); padding: 0 2px; border-radius: 3px; }
+  .load-more-wrap { text-align: center; margin: 24px 0 8px; }
+  .load-more-btn {
+    padding: 12px 32px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; color: var(--text-2); font-size: 14px;
+    cursor: pointer; transition: all .2s; font-family: inherit;
+  }
+  .load-more-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .load-more-hint { text-align: center; color: var(--text-3); font-size: 12px; margin-top: 8px; }
   @media (max-width: 640px) {
     .header .container { gap: 8px; }
     .main-nav a { padding: 6px 10px; font-size: 13px; }
@@ -367,6 +373,41 @@ const SUPABASE_KEY = 'sb_publishable_-uNERFSmoVIUo1j4DO6cPw_9zpCGKwZ';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let tags = [];
+
+// ==================== 分页 ====================
+const PAGE_SIZE = 10;
+let homeVisible = PAGE_SIZE;
+let tagVisible = PAGE_SIZE;
+let collectionVisible = PAGE_SIZE;
+let meVisible = PAGE_SIZE;
+let searchVisible = PAGE_SIZE;
+
+function resetPaging() {
+  homeVisible = PAGE_SIZE;
+  tagVisible = PAGE_SIZE;
+  collectionVisible = PAGE_SIZE;
+  meVisible = PAGE_SIZE;
+  searchVisible = PAGE_SIZE;
+}
+
+function loadMoreHTML(shown, total, extraHint) {
+  if (shown >= total) {
+    if (extraHint && total > 0) {
+      return `<div class="load-more-hint">— 已经到底了 —</div>`;
+    }
+    return '';
+  }
+  return `
+    <div class="load-more-wrap">
+      <button class="load-more-btn" data-load-more>加载更多（${shown}/${total}）</button>
+    </div>
+  `;
+}
+
+function bindLoadMore(callback) {
+  const btn = document.querySelector('[data-load-more]');
+  if (btn) btn.addEventListener('click', callback);
+}
 
 // ==================== 用户 session ====================
 const KEY_USER = 'my_user';
@@ -580,7 +621,6 @@ function renderHeader() {
   });
   updateThemeBtn();
 
-  // 搜索按钮高亮
   if (r === 'search') {
     const sb = document.getElementById('searchNavBtn');
     if (sb) { sb.style.borderColor = 'var(--primary)'; sb.style.color = 'var(--primary)'; }
@@ -780,7 +820,7 @@ function renderRegister() {
 
 /* ============ 搜索页 ============ */
 let searchKeyword = '';
-let searchTab = 'all'; // all | posts | tags | users
+let searchTab = 'all';
 
 function renderSearch() {
   app.innerHTML = `
@@ -796,11 +836,11 @@ function renderSearch() {
   const input = document.getElementById('bigSearchInput');
   input.value = searchKeyword;
   input.focus();
-  // 把光标放到末尾
   try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
 
   input.addEventListener('input', e => {
     searchKeyword = e.target.value;
+    searchVisible = PAGE_SIZE;
     updateSearchResults();
   });
 
@@ -825,7 +865,6 @@ function updateSearchResults() {
     return;
   }
 
-  // 文章匹配
   const matchedPosts = posts.filter(p =>
     p.title.toLowerCase().includes(kw) ||
     (p.content || '').toLowerCase().includes(kw) ||
@@ -837,13 +876,11 @@ function updateSearchResults() {
     })
   ).sort((a, b) => b.id - a.id);
 
-  // 标签匹配
   const matchedTags = tags.filter(t =>
     t.name.toLowerCase().includes(kw) ||
     (t.desc || '').toLowerCase().includes(kw)
   );
 
-  // 作者匹配
   const authorMap = {};
   posts.forEach(p => {
     if (!authorMap[p.author]) authorMap[p.author] = { name: p.author, postCount: 0, likes: 0 };
@@ -857,8 +894,6 @@ function updateSearchResults() {
   const totalCount = matchedPosts.length + matchedTags.length + matchedAuthors.length;
 
   let html = '';
-
-  // 结果统计 + tab
   html += `
     <div class="tabs">
       <span class="tab ${searchTab === 'all' ? 'active' : ''}" data-search-tab="all">全部 (${totalCount})</span>
@@ -885,7 +920,6 @@ function updateSearchResults() {
   const showTags = searchTab === 'all' || searchTab === 'tags';
   const showUsers = searchTab === 'all' || searchTab === 'users';
 
-  // 标签
   if (showTags && matchedTags.length) {
     html += `<h2>标签 (${matchedTags.length})</h2>`;
     html += `<div class="tag-grid">${matchedTags.map(t => {
@@ -900,7 +934,6 @@ function updateSearchResults() {
     }).join('')}</div>`;
   }
 
-  // 作者
   if (showUsers && matchedAuthors.length) {
     html += `<h2>作者 (${matchedAuthors.length})</h2>`;
     html += `<div class="tag-grid">${matchedAuthors.map(a => `
@@ -912,20 +945,23 @@ function updateSearchResults() {
     `).join('')}</div>`;
   }
 
-  // 文章
   if (showPosts && matchedPosts.length) {
     html += `<h2>文章 (${matchedPosts.length})</h2>`;
-    html += matchedPosts.map(postCardHTML).join('');
+    const shown = matchedPosts.slice(0, searchVisible);
+    html += shown.map(postCardHTML).join('');
+    html += loadMoreHTML(searchVisible, matchedPosts.length, true);
   }
 
   container.innerHTML = html;
   bindSearchTabs();
+  bindLoadMore(() => { searchVisible += PAGE_SIZE; updateSearchResults(); });
 }
 
 function bindSearchTabs() {
   document.querySelectorAll('.tab[data-search-tab]').forEach(el => {
     el.addEventListener('click', () => {
       searchTab = el.dataset.searchTab;
+      searchVisible = PAGE_SIZE;
       updateSearchResults();
     });
   });
@@ -962,7 +998,11 @@ function renderHome() {
     } else {
       listHTML = `<p class="empty">${kw ? '没有找到匹配的文章' : '还没有文章，点右上角写一篇吧'}</p>`;
     }
-  } else listHTML = list.map(postCardHTML).join('');
+  } else {
+    const shown = list.slice(0, homeVisible);
+    listHTML = shown.map(postCardHTML).join('');
+    listHTML += loadMoreHTML(homeVisible, list.length, true);
+  }
 
   app.innerHTML = `
     <div class="container">
@@ -985,13 +1025,23 @@ function renderHome() {
   const input = document.getElementById('searchInput');
   input.addEventListener('input', e => {
     homeKeyword = e.target.value;
+    homeVisible = PAGE_SIZE;
     const pos = e.target.selectionStart;
     renderHome();
     const ni = document.getElementById('searchInput');
     ni.focus(); ni.setSelectionRange(pos, pos);
   });
-  document.querySelectorAll('.tab[data-tab]').forEach(el => el.addEventListener('click', () => { homeTab = el.dataset.tab; renderHome(); }));
-  document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => { homeSort = el.dataset.sort; renderHome(); }));
+  document.querySelectorAll('.tab[data-tab]').forEach(el => el.addEventListener('click', () => {
+    homeTab = el.dataset.tab;
+    homeVisible = PAGE_SIZE;
+    renderHome();
+  }));
+  document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => {
+    homeSort = el.dataset.sort;
+    homeVisible = PAGE_SIZE;
+    renderHome();
+  }));
+  bindLoadMore(() => { homeVisible += PAGE_SIZE; renderHome(); });
 }
 
 /* ============ 标签广场 ============ */
@@ -1025,7 +1075,15 @@ function renderTag(slug) {
   let list = posts.filter(p => p.tags.includes(tag.slug));
   if (tagSort === 'hot') list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   else list.sort((a, b) => b.id - a.id);
-  const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">这个标签下还没有文章</p>`;
+
+  let listHTML;
+  if (list.length) {
+    const shown = list.slice(0, tagVisible);
+    listHTML = shown.map(postCardHTML).join('');
+    listHTML += loadMoreHTML(tagVisible, list.length, true);
+  } else {
+    listHTML = `<p class="empty">这个标签下还没有文章</p>`;
+  }
 
   app.innerHTML = `
     <div class="container">
@@ -1047,7 +1105,12 @@ function renderTag(slug) {
     else followedTags.push(tag.slug);
     saveFollows(); renderTag(slug);
   });
-  document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => { tagSort = el.dataset.sort; renderTag(slug); }));
+  document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => {
+    tagSort = el.dataset.sort;
+    tagVisible = PAGE_SIZE;
+    renderTag(slug);
+  }));
+  bindLoadMore(() => { tagVisible += PAGE_SIZE; renderTag(slug); });
 }
 
 /* ============ 我的页面 ============ */
@@ -1062,9 +1125,13 @@ function renderMe() {
 
   let tabContent = '';
   if (meTab === 'posts') {
-    tabContent = myPosts.length
-      ? myPosts.map(postCardHTML).join('')
-      : `<p class="empty">你还没有发布文章，<a href="#/write" style="color:var(--primary);">写一篇</a>吧</p>`;
+    if (myPosts.length) {
+      const shown = myPosts.slice(0, meVisible);
+      tabContent = shown.map(postCardHTML).join('');
+      tabContent += loadMoreHTML(meVisible, myPosts.length, true);
+    } else {
+      tabContent = `<p class="empty">你还没有发布文章，<a href="#/write" style="color:var(--primary);">写一篇</a>吧</p>`;
+    }
   } else if (meTab === 'collections') {
     tabContent = myColls.length
       ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>`
@@ -1116,7 +1183,9 @@ function renderMe() {
   `;
 
   document.querySelectorAll('.tab[data-me]').forEach(el => el.addEventListener('click', () => {
-    meTab = el.dataset.me; renderMe();
+    meTab = el.dataset.me;
+    meVisible = PAGE_SIZE;
+    renderMe();
   }));
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -1125,6 +1194,8 @@ function renderMe() {
     location.hash = '#/';
     location.reload();
   });
+
+  bindLoadMore(() => { meVisible += PAGE_SIZE; renderMe(); });
 }
 
 /* ============ 他人主页 ============ */
@@ -1132,7 +1203,14 @@ function renderUser(name) {
   const decoded = decodeURIComponent(name);
   const list = posts.filter(p => p.author === decoded).sort((a, b) => b.id - a.id);
   const myColls = collections.filter(c => c.author === decoded);
-  const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">TA 还没有发布文章</p>`;
+
+  let listHTML;
+  if (list.length) {
+    listHTML = list.map(postCardHTML).join('');
+  } else {
+    listHTML = `<p class="empty">TA 还没有发布文章</p>`;
+  }
+
   const collHTML = myColls.length
     ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>`
     : `<p style="color:var(--text-3);font-size:14px;">TA 还没有创建合集</p>`;
@@ -1172,7 +1250,15 @@ function renderCollection(id) {
   if (!c) { app.innerHTML = `<div class="container"><p class="empty">合集不存在</p></div>`; return; }
   const isMine = currentUser && String(c.userId) === String(currentUser.id);
   const list = posts.filter(p => p.collectionId === c.id).sort((a, b) => b.id - a.id);
-  const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">这个合集下还没有文章</p>`;
+
+  let listHTML;
+  if (list.length) {
+    const shown = list.slice(0, collectionVisible);
+    listHTML = shown.map(postCardHTML).join('');
+    listHTML += loadMoreHTML(collectionVisible, list.length, true);
+  } else {
+    listHTML = `<p class="empty">这个合集下还没有文章</p>`;
+  }
 
   app.innerHTML = `
     <div class="container">
@@ -1208,6 +1294,7 @@ function renderCollection(id) {
       location.hash = '#/collections';
     });
   }
+  bindLoadMore(() => { collectionVisible += PAGE_SIZE; renderCollection(id); });
 }
 
 let collectionCoverData = null;
@@ -1605,6 +1692,13 @@ function router() {
 
   const hash = location.hash || '#/';
   const parts = hash.slice(2).split('/');
+
+  // 切换页面时重置分页
+  if (parts[0] !== 'search') searchVisible = PAGE_SIZE;
+  if (parts[0] !== '') homeVisible = PAGE_SIZE;
+  if (parts[0] !== 'tag') tagVisible = PAGE_SIZE;
+  if (parts[0] !== 'collection') collectionVisible = PAGE_SIZE;
+  if (parts[0] !== 'me') meVisible = PAGE_SIZE;
 
   if (parts[0] === 'login') renderLogin();
   else if (parts[0] === 'register') renderRegister();
