@@ -122,6 +122,7 @@
   .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); }
   .form-group textarea { min-height: 200px; resize: vertical; }
   .form-group textarea.short { min-height: 80px; }
+  .form-hint { font-size: 12px; color: var(--text-3); margin-top: 6px; }
   .tag-choices { display: flex; gap: 8px; flex-wrap: wrap; }
   .tag-choice {
     padding: 6px 14px; background: var(--card); border: 1px solid var(--border);
@@ -592,21 +593,22 @@ async function uploadImage(file) {
   return publicUrl;
 }
 
-/* ============ 登录 / 注册 ============ */
+/* ============ 登录（用登录名或邮箱） ============ */
 function renderLogin() {
   app.innerHTML = `
     <div class="container">
       <div class="auth-card">
         <h1>欢迎回来</h1>
-        <p class="auth-sub">登录后即可发布文章、创建合集</p>
+        <p class="auth-sub">用你的登录名和密码登录</p>
         <div id="authError"></div>
         <div class="form-group">
-          <label>邮箱</label>
-          <input type="email" id="email" placeholder="you@example.com" />
+          <label>登录名</label>
+          <input type="text" id="loginName" placeholder="注册时填的登录名" autocomplete="username" />
+          <p class="form-hint">如果你之前是用邮箱注册的，直接填邮箱也行。</p>
         </div>
         <div class="form-group">
           <label>密码</label>
-          <input type="password" id="password" placeholder="至少 6 位" />
+          <input type="password" id="password" placeholder="你的密码" autocomplete="current-password" />
         </div>
         <button class="submit-btn" id="loginBtn">登录</button>
         <p class="auth-switch">还没有账号？<a href="#/register">立即注册</a></p>
@@ -614,16 +616,18 @@ function renderLogin() {
     </div>
   `;
   const submit = async () => {
-    const email = document.getElementById('email').value.trim();
+    const input = document.getElementById('loginName').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const errBox = document.getElementById('authError');
     errBox.innerHTML = '';
-    if (!email || !password) { errBox.innerHTML = '<div class="auth-error">请填写邮箱和密码</div>'; return; }
+    if (!input || !password) { errBox.innerHTML = '<div class="auth-error">请填写登录名和密码</div>'; return; }
+    const email = input.includes('@') ? input : (input + '@example.com');
     const btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = '登录中…';
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      errBox.innerHTML = `<div class="auth-error">${escapeHTML(error.message)}</div>`;
+      const msg = /Invalid login/i.test(error.message) ? '登录名或密码错误' : error.message;
+      errBox.innerHTML = `<div class="auth-error">${escapeHTML(msg)}</div>`;
       btn.disabled = false; btn.textContent = '登录';
       return;
     }
@@ -634,52 +638,70 @@ function renderLogin() {
   document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
 }
 
+/* ============ 注册（不需要邮箱） ============ */
 function renderRegister() {
   app.innerHTML = `
     <div class="container">
       <div class="auth-card">
         <h1>创建账号</h1>
-        <p class="auth-sub">注册后就能发布文章啦</p>
+        <p class="auth-sub">不需要邮箱，取个登录名就行</p>
         <div id="authError"></div>
         <div class="form-group">
-          <label>昵称</label>
-          <input type="text" id="username" placeholder="别人看到的名字" maxlength="20" />
+          <label>显示名（别人看到的名字）</label>
+          <input type="text" id="displayNameInput" placeholder="例如：小明" maxlength="20" />
         </div>
         <div class="form-group">
-          <label>邮箱</label>
-          <input type="email" id="email" placeholder="you@example.com" />
+          <label>登录名（登录用，只能小写字母/数字/下划线）</label>
+          <input type="text" id="loginName" placeholder="例如：xiaoming" autocomplete="username" maxlength="20" />
+          <p class="form-hint">3-20 位，只能包含小写字母、数字、下划线。</p>
         </div>
         <div class="form-group">
           <label>密码</label>
-          <input type="password" id="password" placeholder="至少 6 位" />
+          <input type="password" id="password" placeholder="至少 6 位" autocomplete="new-password" />
         </div>
         <button class="submit-btn" id="registerBtn">注册</button>
         <p class="auth-switch">已有账号？<a href="#/login">去登录</a></p>
+        <p style="font-size:12px;color:var(--text-3);margin-top:16px;text-align:center;line-height:1.6;">
+          登录名只在登录时使用，别人看不到它。<br>忘记登录名就没办法找回，请记好。
+        </p>
       </div>
     </div>
   `;
   const submit = async () => {
-    const username = document.getElementById('username').value.trim();
-    const email = document.getElementById('email').value.trim();
+    const displayNameVal = document.getElementById('displayNameInput').value.trim();
+    const loginNameVal = document.getElementById('loginName').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const errBox = document.getElementById('authError');
     errBox.innerHTML = '';
-    if (!username) { errBox.innerHTML = '<div class="auth-error">请填写昵称</div>'; return; }
-    if (!email) { errBox.innerHTML = '<div class="auth-error">请填写邮箱</div>'; return; }
+
+    if (!displayNameVal) { errBox.innerHTML = '<div class="auth-error">请填写显示名</div>'; return; }
+    if (!/^[a-z0-9_]{3,20}$/.test(loginNameVal)) {
+      errBox.innerHTML = '<div class="auth-error">登录名只能是 3-20 位小写字母、数字或下划线</div>';
+      return;
+    }
     if (password.length < 6) { errBox.innerHTML = '<div class="auth-error">密码至少 6 位</div>'; return; }
+
+    const email = loginNameVal + '@example.com';
     const btn = document.getElementById('registerBtn');
     btn.disabled = true; btn.textContent = '注册中…';
+
     const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { username } },
+      options: { data: { username: displayNameVal, login_name: loginNameVal } },
     });
+
     if (error) {
-      errBox.innerHTML = `<div class="auth-error">${escapeHTML(error.message)}</div>`;
+      let msg = error.message;
+      if (/already/i.test(msg)) msg = '这个登录名已经被使用了，换一个吧';
+      errBox.innerHTML = `<div class="auth-error">${escapeHTML(msg)}</div>`;
       btn.disabled = false; btn.textContent = '注册';
       return;
     }
     if (!data.session) {
-      errBox.innerHTML = `<div class="auth-success">注册成功！请去邮箱点击确认链接，然后回来登录。</div>`;
+      errBox.innerHTML = `<div class="auth-success">
+        注册成功，但还需要邮箱验证。<br>
+        请回 Supabase → Authentication → Sign In / Providers，把「Confirm email」关掉，然后重新注册。
+      </div>`;
       btn.disabled = false; btn.textContent = '注册';
       return;
     }
@@ -820,6 +842,7 @@ function renderMe() {
   const myPosts = posts.filter(p => p.userId === currentUser.id).sort((a, b) => b.id - a.id);
   const myColls = collections.filter(c => c.userId === currentUser.id).sort((a, b) => b.id - a.id);
   const totalLikes = myPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
+  const loginName = (currentUser.user_metadata || {}).login_name || '';
 
   let tabContent = '';
   if (meTab === 'posts') {
@@ -853,7 +876,7 @@ function renderMe() {
         <div class="me-avatar">${escapeHTML(name[0])}</div>
         <div class="me-info">
           <h1>${escapeHTML(name)}</h1>
-          <p class="me-email">${escapeHTML(currentUser.email)}</p>
+          <p class="me-email">登录名：${escapeHTML(loginName || currentUser.email.split('@')[0])}</p>
           <div class="stat-row">
             <div class="stat-item"><strong>${myPosts.length}</strong>篇文章</div>
             <div class="stat-item"><strong>${myColls.length}</strong>个合集</div>
@@ -1386,4 +1409,3 @@ init();
 
 </body>
 </html>
-);
