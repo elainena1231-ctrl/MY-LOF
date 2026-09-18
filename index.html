@@ -66,6 +66,10 @@
     background: var(--primary); color: #fff;
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; font-weight: bold;
+    object-fit: cover; overflow: hidden; flex-shrink: 0;
+  }
+  .avatar-sm {
+    width: 20px; height: 20px; font-size: 10px;
   }
   h1 { font-size: 26px; margin-bottom: 6px; }
   h2 { font-size: 18px; margin: 24px 0 12px; }
@@ -89,7 +93,8 @@
   }
   .post h3 { font-size: 16px; margin-bottom: 6px; color: var(--text); }
   .post p { color: var(--text-2); font-size: 14px; margin-bottom: 8px; }
-  .post .meta { font-size: 12px; color: var(--text-3); }
+  .post .meta { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .post .meta .author-inline { display: inline-flex; align-items: center; gap: 5px; }
   .back { color: var(--text-2); font-size: 14px; text-decoration: none; display: inline-block; margin-bottom: 16px; }
   .back:hover { color: var(--primary); }
   .empty { text-align: center; color: var(--text-3); padding: 60px 0; }
@@ -160,13 +165,14 @@
   }
   .action-btn:hover { border-color: var(--primary); color: var(--primary); }
   .action-btn.liked { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .action-btn.faved { background: var(--primary); color: #fff; border-color: var(--primary); }
   .action-btn.danger:hover { border-color: #e33; color: #e33; }
   .comments { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
   .comment-item {
     background: var(--card); border: 1px solid var(--border); border-radius: 10px;
     padding: 12px 16px; margin-bottom: 10px;
   }
-  .comment-item .c-author { font-size: 13px; color: var(--text-3); margin-bottom: 4px; }
+  .comment-item .c-author { font-size: 13px; color: var(--text-3); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
   .comment-item .c-content { font-size: 15px; color: var(--text); }
   .comment-form { display: flex; gap: 8px; margin-top: 16px; }
   .comment-form input {
@@ -306,17 +312,45 @@
   .tag-card .tc-name { font-size: 16px; font-weight: bold; color: var(--primary); margin-bottom: 6px; }
   .tag-card .tc-desc { font-size: 13px; color: var(--text-2); margin-bottom: 8px; min-height: 38px; }
   .tag-card .tc-meta { font-size: 12px; color: var(--text-3); }
+  .user-card {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; text-decoration: none; color: inherit;
+    transition: all .2s;
+  }
+  .user-card:hover { border-color: var(--primary); box-shadow: 0 4px 16px var(--shadow); }
+  .user-card .uc-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: bold; flex-shrink: 0;
+    object-fit: cover; overflow: hidden;
+  }
+  .user-card .uc-info { flex: 1; min-width: 0; }
+  .user-card .uc-name { font-size: 16px; font-weight: bold; color: var(--text); margin-bottom: 2px; }
+  .user-card .uc-meta { font-size: 13px; color: var(--text-3); }
   .me-header {
     display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
     background: var(--card); border: 1px solid var(--border);
     border-radius: 16px; padding: 24px; margin-bottom: 24px;
   }
+  .me-avatar-wrap { position: relative; flex-shrink: 0; cursor: pointer; }
   .me-avatar {
     width: 72px; height: 72px; border-radius: 50%;
     background: var(--primary); color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-size: 30px; font-weight: bold; flex-shrink: 0;
+    font-size: 30px; font-weight: bold;
+    object-fit: cover; overflow: hidden;
+    transition: opacity .2s;
   }
+  .me-avatar-wrap:hover .me-avatar { opacity: .8; }
+  .me-avatar-wrap .me-avatar-hint {
+    position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+    background: var(--primary); color: #fff; font-size: 11px;
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+    opacity: 0; transition: opacity .2s;
+  }
+  .me-avatar-wrap:hover .me-avatar-hint { opacity: 1; }
   .me-info { flex: 1; min-width: 200px; }
   .me-info h1 { margin-bottom: 4px; }
   .me-info .me-email { color: var(--text-3); font-size: 13px; }
@@ -349,6 +383,7 @@
     .main-nav a { padding: 6px 10px; font-size: 13px; }
     .write-btn { padding: 6px 12px; font-size: 12px; }
     .post img { width: 100px; height: 80px; }
+    .user-chip span { display: none; }
   }
 </style>
 </head>
@@ -373,6 +408,8 @@ const SUPABASE_KEY = 'sb_publishable_-uNERFSmoVIUo1j4DO6cPw_9zpCGKwZ';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let tags = [];
+let allUsers = [];   // { id, login_name, display_name, avatar }
+let usersByName = {};   // display_name -> user
 
 // ==================== 分页 ====================
 const PAGE_SIZE = 10;
@@ -380,33 +417,19 @@ let homeVisible = PAGE_SIZE;
 let tagVisible = PAGE_SIZE;
 let collectionVisible = PAGE_SIZE;
 let meVisible = PAGE_SIZE;
+let meFavVisible = PAGE_SIZE;
 let searchVisible = PAGE_SIZE;
-
-function resetPaging() {
-  homeVisible = PAGE_SIZE;
-  tagVisible = PAGE_SIZE;
-  collectionVisible = PAGE_SIZE;
-  meVisible = PAGE_SIZE;
-  searchVisible = PAGE_SIZE;
-}
 
 function loadMoreHTML(shown, total, extraHint) {
   if (shown >= total) {
-    if (extraHint && total > 0) {
-      return `<div class="load-more-hint">— 已经到底了 —</div>`;
-    }
+    if (extraHint && total > 0) return `<div class="load-more-hint">— 已经到底了 —</div>`;
     return '';
   }
-  return `
-    <div class="load-more-wrap">
-      <button class="load-more-btn" data-load-more>加载更多（${shown}/${total}）</button>
-    </div>
-  `;
+  return `<div class="load-more-wrap"><button class="load-more-btn" data-load-more>加载更多（${shown}/${total}）</button></div>`;
 }
-
-function bindLoadMore(callback) {
+function bindLoadMore(cb) {
   const btn = document.querySelector('[data-load-more]');
-  if (btn) btn.addEventListener('click', callback);
+  if (btn) btn.addEventListener('click', cb);
 }
 
 // ==================== 用户 session ====================
@@ -418,10 +441,7 @@ function saveUser(u) {
   else localStorage.removeItem(KEY_USER);
   currentUser = u;
 }
-
-function displayName() {
-  return currentUser ? currentUser.displayName : '游客';
-}
+function displayName() { return currentUser ? currentUser.displayName : '游客'; }
 
 // ==================== 密码 hash ====================
 async function hashPassword(password) {
@@ -432,14 +452,10 @@ async function hashPassword(password) {
 
 async function registerUser(loginName, dispName, password) {
   const passwordHash = await hashPassword(password);
-  const { data: existing } = await supabase
-    .from('app_users').select('id').eq('login_name', loginName).maybeSingle();
+  const { data: existing } = await supabase.from('app_users').select('id').eq('login_name', loginName).maybeSingle();
   if (existing) throw new Error('这个登录名已经被使用了，换一个吧');
-
   const { data, error } = await supabase.from('app_users').insert({
-    login_name: loginName,
-    display_name: dispName,
-    password_hash: passwordHash,
+    login_name: loginName, display_name: dispName, password_hash: passwordHash,
   }).select().single();
   if (error) throw error;
   return data;
@@ -447,10 +463,7 @@ async function registerUser(loginName, dispName, password) {
 
 async function loginUser(loginName, password) {
   const passwordHash = await hashPassword(password);
-  const { data, error } = await supabase.from('app_users')
-    .select('*')
-    .eq('login_name', loginName)
-    .maybeSingle();
+  const { data, error } = await supabase.from('app_users').select('*').eq('login_name', loginName).maybeSingle();
   if (error) throw error;
   if (!data) throw new Error('登录名或密码错误');
   if (data.password_hash !== passwordHash) throw new Error('登录名或密码错误');
@@ -463,6 +476,9 @@ let collections = [];
 let loaded = false;
 let followedTags = JSON.parse(localStorage.getItem('my_followed_tags') || '[]');
 let myLikes = JSON.parse(localStorage.getItem('my_likes') || '[]');
+// 收藏和关注作者存数据库，因为要按用户区分
+let myFavorites = new Set();    // Set of post ids
+let followedAuthors = new Set(); // Set of author display names
 
 function saveFollows() { localStorage.setItem('my_followed_tags', JSON.stringify(followedTags)); }
 function saveLikes() { localStorage.setItem('my_likes', JSON.stringify(myLikes)); }
@@ -495,19 +511,17 @@ function postToRow(p) {
   };
 }
 function rowToColl(r) {
-  return {
-    id: r.id, name: r.name, desc: r.desc_text || '', author: r.author,
-    cover: r.cover, date: r.date, userId: r.user_id,
-  };
+  return { id: r.id, name: r.name, desc: r.desc_text || '', author: r.author, cover: r.cover, date: r.date, userId: r.user_id };
 }
 function collToRow(c) {
-  return {
-    id: c.id, name: c.name, desc_text: c.desc, author: c.author,
-    cover: c.cover, date: c.date, user_id: c.userId ? String(c.userId) : null,
-  };
+  return { id: c.id, name: c.name, desc_text: c.desc, author: c.author, cover: c.cover, date: c.date, user_id: c.userId ? String(c.userId) : null };
 }
-function rowToTag(r) {
-  return { id: r.id, slug: r.slug, name: r.name, desc: r.description || '' };
+function rowToTag(r) { return { id: r.id, slug: r.slug, name: r.name, desc: r.description || '' }; }
+function rowToUser(r) { return { id: r.id, loginName: r.login_name, displayName: r.display_name, avatar: r.avatar || null }; }
+
+function rebuildUsersByName() {
+  usersByName = {};
+  allUsers.forEach(u => { usersByName[u.displayName] = u; });
 }
 
 async function loadAll() {
@@ -518,13 +532,44 @@ async function loadAll() {
   const { data: tData, error: tErr } = await supabase.from('tags').select('*').order('id', { ascending: true });
   if (tErr) throw tErr;
 
+  // 不读 password_hash
+  const { data: uData, error: uErr } = await supabase
+    .from('app_users')
+    .select('id, login_name, display_name, avatar');
+  if (uErr) throw uErr;
+
   posts = (pData || []).map(rowToPost);
   collections = (cData || []).map(rowToColl);
   tags = (tData || []).map(rowToTag);
+  allUsers = (uData || []).map(rowToUser);
+  rebuildUsersByName();
+
+  // 更新 currentUser 里的 avatar（如果数据库有新值）
+  if (currentUser) {
+    const me = allUsers.find(u => String(u.id) === String(currentUser.id));
+    if (me) {
+      currentUser.avatar = me.avatar;
+      currentUser.displayName = me.displayName;
+      saveUser(currentUser);
+    }
+  }
 
   posts.forEach(p => {
     if (p.collectionId && !collections.find(c => c.id === p.collectionId)) p.collectionId = null;
   });
+
+  // 加载收藏和关注作者
+  if (currentUser) {
+    const { data: fData } = await supabase.from('favorites').select('post_id').eq('user_id', String(currentUser.id));
+    myFavorites = new Set((fData || []).map(r => r.post_id));
+
+    const { data: aData } = await supabase.from('author_follows').select('followee_name').eq('follower_id', String(currentUser.id));
+    followedAuthors = new Set((aData || []).map(r => r.followee_name));
+  } else {
+    myFavorites = new Set();
+    followedAuthors = new Set();
+  }
+
   loaded = true;
 }
 
@@ -533,14 +578,9 @@ async function createTag(name) {
   if (!trimmed) throw new Error('标签名不能为空');
   const existing = tags.find(t => t.name === trimmed);
   if (existing) return existing;
-
   const { data, error } = await supabase.from('tags').insert({
-    slug: trimmed,
-    name: trimmed,
-    description: '',
-    created_by: currentUser ? String(currentUser.id) : null,
+    slug: trimmed, name: trimmed, description: '', created_by: currentUser ? String(currentUser.id) : null,
   }).select().single();
-
   if (error) {
     if (/duplicate|unique/i.test(error.message)) {
       const { data: all } = await supabase.from('tags').select('*').order('id', { ascending: true });
@@ -576,6 +616,36 @@ async function removeColl(c) {
   showSync('已删除'); return true;
 }
 
+// 收藏
+async function toggleFavorite(postId) {
+  if (!currentUser) return;
+  const uid = String(currentUser.id);
+  if (myFavorites.has(postId)) {
+    myFavorites.delete(postId);
+    await supabase.from('favorites').delete().eq('user_id', uid).eq('post_id', postId);
+    showSync('已取消收藏');
+  } else {
+    myFavorites.add(postId);
+    await supabase.from('favorites').insert({ user_id: uid, post_id: postId });
+    showSync('已收藏');
+  }
+}
+
+// 关注作者
+async function toggleFollowAuthor(name) {
+  if (!currentUser) return;
+  const uid = String(currentUser.id);
+  if (followedAuthors.has(name)) {
+    followedAuthors.delete(name);
+    await supabase.from('author_follows').delete().eq('follower_id', uid).eq('followee_name', name);
+    showSync('已取消关注');
+  } else {
+    followedAuthors.add(name);
+    await supabase.from('author_follows').insert({ follower_id: uid, followee_name: name });
+    showSync('已关注');
+  }
+}
+
 const app = document.getElementById('app');
 if (localStorage.getItem('my_theme') === 'dark') document.body.classList.add('dark');
 
@@ -584,6 +654,31 @@ function currentRoute() {
   return hash.slice(2).split('/')[0] || '';
 }
 
+// ==================== 头像工具 ====================
+function avatarURL(name) {
+  const u = usersByName[name];
+  return u && u.avatar ? u.avatar : null;
+}
+function avatarHTML(name, size, cls) {
+  size = size || 28;
+  const clsStr = cls ? ('avatar ' + cls) : 'avatar';
+  const url = avatarURL(name);
+  const first = (name || '?')[0];
+  if (url) {
+    return `<img class="${clsStr}" src="${url}" alt="${escapeHTML(name)}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.45)}px;" />`;
+  }
+  return `<div class="${clsStr}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.45)}px;">${escapeHTML(first)}</div>`;
+}
+function currentUserAvatarHTML(size) {
+  size = size || 28;
+  if (!currentUser) return '';
+  if (currentUser.avatar) {
+    return `<img class="avatar" src="${currentUser.avatar}" alt="" style="width:${size}px;height:${size}px;" />`;
+  }
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.45)}px;">${escapeHTML(displayName()[0])}</div>`;
+}
+
+// ==================== header ====================
 function renderHeader() {
   const nav = document.getElementById('mainNav');
   const r = currentRoute();
@@ -593,7 +688,6 @@ function renderHeader() {
     'collections': r === 'collections' ? 'active' : '',
     'me': r === 'me' ? 'active' : '',
   };
-
   nav.innerHTML = `
     <a href="#/" class="${active['']}">首页</a>
     <a href="#/tags" class="${active['tags']}">标签</a>
@@ -607,7 +701,7 @@ function renderHeader() {
   const writeBtn = `<a href="#/write" class="write-btn">✏️ 写文章</a>`;
   const userArea = currentUser
     ? `<a href="#/me" class="user-chip" id="userChip">
-         <div class="avatar">${escapeHTML(displayName()[0])}</div>
+         ${currentUserAvatarHTML(28)}
          <span>${escapeHTML(displayName())}</span>
        </a>`
     : `<a href="#/login" class="mini-btn">登录</a>`;
@@ -649,6 +743,7 @@ function collectionCoverOf(c) { return c.cover || ('https://picsum.photos/seed/c
 
 function postCardHTML(p) {
   const coll = p.collectionId ? collections.find(c => c.id === p.collectionId) : null;
+  const faved = myFavorites.has(p.id);
   return `
     <a class="post" href="#/post/${p.id}">
       <img src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
@@ -656,7 +751,9 @@ function postCardHTML(p) {
         <h3>${escapeHTML(p.title)}</h3>
         <p>${escapeHTML(p.excerpt)}</p>
         <span class="meta">
-          ${escapeHTML(p.author)} · ${p.date} · ♡ ${p.likes} · 💬 ${p.comments.length}
+          <span class="author-inline">${avatarHTML(p.author, 18, 'avatar-sm')}${escapeHTML(p.author)}</span>
+          · ${p.date} · ♡ ${p.likes} · 💬 ${p.comments.length}
+          ${faved ? ' · ⭐ 已收藏' : ''}
           ${coll ? ' · 📚 ' + escapeHTML(coll.name) : ''}
         </span>
       </div>
@@ -671,6 +768,24 @@ function collectionCardHTML(c) {
       <div class="collection-body">
         <h3>📚 ${escapeHTML(c.name)}</h3>
         <p>${count} 篇文章 · ${escapeHTML(c.author)}</p>
+      </div>
+    </a>
+  `;
+}
+function userCardHTML(name) {
+  const u = usersByName[name];
+  const avatarURLValue = u && u.avatar ? u.avatar : null;
+  const postCount = posts.filter(p => p.author === name).length;
+  const likes = posts.filter(p => p.author === name).reduce((s, p) => s + (p.likes || 0), 0);
+  const avatarBlock = avatarURLValue
+    ? `<img class="uc-avatar" src="${avatarURLValue}" alt="" />`
+    : `<div class="uc-avatar">${escapeHTML((name || '?')[0])}</div>`;
+  return `
+    <a class="user-card" href="#/user/${encodeURIComponent(name)}">
+      ${avatarBlock}
+      <div class="uc-info">
+        <div class="uc-name">👤 ${escapeHTML(name)}</div>
+        <div class="uc-meta">${postCount} 篇文章 · ${likes} 个赞</div>
       </div>
     </a>
   `;
@@ -715,6 +830,20 @@ async function uploadImage(file) {
   const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(data.path);
   return publicUrl;
 }
+async function uploadAvatar(file) {
+  return await uploadImage(file);
+}
+
+async function saveAvatar(url) {
+  const { error } = await supabase.from('app_users').update({ avatar: url }).eq('id', currentUser.id);
+  if (error) throw error;
+  // 更新本地
+  currentUser.avatar = url;
+  saveUser(currentUser);
+  const me = allUsers.find(u => String(u.id) === String(currentUser.id));
+  if (me) me.avatar = url;
+  rebuildUsersByName();
+}
 
 /* ============ 登录 ============ */
 function renderLogin() {
@@ -743,12 +872,11 @@ function renderLogin() {
     const errBox = document.getElementById('authError');
     errBox.innerHTML = '';
     if (!loginName || !password) { errBox.innerHTML = '<div class="auth-error">请填写登录名和密码</div>'; return; }
-
     const btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = '登录中…';
     try {
       const user = await loginUser(loginName, password);
-      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name });
+      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name, avatar: user.avatar || null });
       location.hash = '#/me';
       location.reload();
     } catch (e) {
@@ -783,9 +911,6 @@ function renderRegister() {
         </div>
         <button class="submit-btn" id="registerBtn">注册</button>
         <p class="auth-switch">已有账号？<a href="#/login">去登录</a></p>
-        <p style="font-size:12px;color:var(--text-3);margin-top:16px;text-align:center;line-height:1.6;">
-          登录名只在登录时使用，别人看不到它。<br>忘记登录名就没办法找回，请记好。
-        </p>
       </div>
     </div>
   `;
@@ -795,19 +920,14 @@ function renderRegister() {
     const password = document.getElementById('password').value;
     const errBox = document.getElementById('authError');
     errBox.innerHTML = '';
-
     if (!displayNameVal) { errBox.innerHTML = '<div class="auth-error">请填写显示名</div>'; return; }
-    if (!/^[a-z0-9_]{3,20}$/.test(loginNameVal)) {
-      errBox.innerHTML = '<div class="auth-error">登录名只能是 3-20 位小写字母、数字或下划线</div>';
-      return;
-    }
+    if (!/^[a-z0-9_]{3,20}$/.test(loginNameVal)) { errBox.innerHTML = '<div class="auth-error">登录名只能是 3-20 位小写字母、数字或下划线</div>'; return; }
     if (password.length < 6) { errBox.innerHTML = '<div class="auth-error">密码至少 6 位</div>'; return; }
-
     const btn = document.getElementById('registerBtn');
     btn.disabled = true; btn.textContent = '注册中…';
     try {
       const user = await registerUser(loginNameVal, displayNameVal, password);
-      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name });
+      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name, avatar: null });
       location.hash = '#/me';
       location.reload();
     } catch (e) {
@@ -837,20 +957,17 @@ function renderSearch() {
   input.value = searchKeyword;
   input.focus();
   try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
-
   input.addEventListener('input', e => {
     searchKeyword = e.target.value;
     searchVisible = PAGE_SIZE;
     updateSearchResults();
   });
-
   updateSearchResults();
 }
 
 function updateSearchResults() {
   const container = document.getElementById('searchResults');
   if (!container) return;
-
   const rawKw = searchKeyword.trim();
   const kw = rawKw.toLowerCase();
 
@@ -877,8 +994,7 @@ function updateSearchResults() {
   ).sort((a, b) => b.id - a.id);
 
   const matchedTags = tags.filter(t =>
-    t.name.toLowerCase().includes(kw) ||
-    (t.desc || '').toLowerCase().includes(kw)
+    t.name.toLowerCase().includes(kw) || (t.desc || '').toLowerCase().includes(kw)
   );
 
   const authorMap = {};
@@ -893,8 +1009,7 @@ function updateSearchResults() {
 
   const totalCount = matchedPosts.length + matchedTags.length + matchedAuthors.length;
 
-  let html = '';
-  html += `
+  let html = `
     <div class="tabs">
       <span class="tab ${searchTab === 'all' ? 'active' : ''}" data-search-tab="all">全部 (${totalCount})</span>
       <span class="tab ${searchTab === 'posts' ? 'active' : ''}" data-search-tab="posts">文章 (${matchedPosts.length})</span>
@@ -908,7 +1023,7 @@ function updateSearchResults() {
       <div class="search-empty-hint">
         <div class="big">😶</div>
         <div class="hint-line">没有找到与「${escapeHTML(rawKw)}」相关的内容</div>
-        <div class="small">换个关键词试试，或去 <a href="#/tags" style="color:var(--primary);">标签广场</a> 逛逛</div>
+        <div class="small">换个关键词试试</div>
       </div>
     `;
     container.innerHTML = html;
@@ -929,20 +1044,13 @@ function updateSearchResults() {
           <div class="tc-name">#${highlight(t.name, rawKw)}</div>
           <div class="tc-desc">${escapeHTML(t.desc || '')}</div>
           <div class="tc-meta">${count} 篇文章</div>
-        </a>
-      `;
+        </a>`;
     }).join('')}</div>`;
   }
 
   if (showUsers && matchedAuthors.length) {
     html += `<h2>作者 (${matchedAuthors.length})</h2>`;
-    html += `<div class="tag-grid">${matchedAuthors.map(a => `
-      <a class="tag-card" href="#/user/${encodeURIComponent(a.name)}">
-        <div class="tc-name" style="color:var(--text);">👤 ${highlight(a.name, rawKw)}</div>
-        <div class="tc-desc">${a.postCount} 篇文章 · ${a.likes} 个赞</div>
-        <div class="tc-meta">点击查看主页</div>
-      </a>
-    `).join('')}</div>`;
+    html += `<div class="tag-grid">${matchedAuthors.map(a => userCardHTML(a.name)).join('')}</div>`;
   }
 
   if (showPosts && matchedPosts.length) {
@@ -970,11 +1078,15 @@ function bindSearchTabs() {
 /* ============ 首页 ============ */
 let homeSort = 'new';
 let homeKeyword = '';
-let homeTab = 'all';
+let homeTab = 'all'; // all | following-tags | following-authors
 
 function renderHome() {
   let list = posts.slice();
-  if (homeTab === 'following') list = list.filter(p => p.tags.some(s => followedTags.includes(s)));
+  if (homeTab === 'following-tags') {
+    list = list.filter(p => p.tags.some(s => followedTags.includes(s)));
+  } else if (homeTab === 'following-authors') {
+    list = list.filter(p => followedAuthors.has(p.author));
+  }
 
   const kw = homeKeyword.trim().toLowerCase();
   if (kw) {
@@ -993,8 +1105,10 @@ function renderHome() {
 
   let listHTML;
   if (!list.length) {
-    if (homeTab === 'following' && followedTags.length === 0) {
+    if (homeTab === 'following-tags' && followedTags.length === 0) {
       listHTML = `<p class="empty">你还没有关注任何标签，去 <a href="#/tags" style="color:var(--primary);">标签页</a> 逛逛吧</p>`;
+    } else if (homeTab === 'following-authors' && followedAuthors.size === 0) {
+      listHTML = `<p class="empty">你还没有关注任何作者。去文章里点作者名进入 TA 的主页，然后点「关注」</p>`;
     } else {
       listHTML = `<p class="empty">${kw ? '没有找到匹配的文章' : '还没有文章，点右上角写一篇吧'}</p>`;
     }
@@ -1013,7 +1127,8 @@ function renderHome() {
       </div>
       <div class="tabs">
         <span class="tab ${homeTab === 'all' ? 'active' : ''}" data-tab="all">推荐</span>
-        <span class="tab ${homeTab === 'following' ? 'active' : ''}" data-tab="following">我关注的标签</span>
+        <span class="tab ${homeTab === 'following-tags' ? 'active' : ''}" data-tab="following-tags">关注的标签</span>
+        <span class="tab ${homeTab === 'following-authors' ? 'active' : ''}" data-tab="following-authors">关注的作者</span>
         <span style="flex:1"></span>
         <span class="tab ${homeSort === 'new' ? 'active' : ''}" data-sort="new">最新</span>
         <span class="tab ${homeSort === 'hot' ? 'active' : ''}" data-sort="hot">热门</span>
@@ -1032,14 +1147,10 @@ function renderHome() {
     ni.focus(); ni.setSelectionRange(pos, pos);
   });
   document.querySelectorAll('.tab[data-tab]').forEach(el => el.addEventListener('click', () => {
-    homeTab = el.dataset.tab;
-    homeVisible = PAGE_SIZE;
-    renderHome();
+    homeTab = el.dataset.tab; homeVisible = PAGE_SIZE; renderHome();
   }));
   document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => {
-    homeSort = el.dataset.sort;
-    homeVisible = PAGE_SIZE;
-    renderHome();
+    homeSort = el.dataset.sort; homeVisible = PAGE_SIZE; renderHome();
   }));
   bindLoadMore(() => { homeVisible += PAGE_SIZE; renderHome(); });
 }
@@ -1081,9 +1192,7 @@ function renderTag(slug) {
     const shown = list.slice(0, tagVisible);
     listHTML = shown.map(postCardHTML).join('');
     listHTML += loadMoreHTML(tagVisible, list.length, true);
-  } else {
-    listHTML = `<p class="empty">这个标签下还没有文章</p>`;
-  }
+  } else listHTML = `<p class="empty">这个标签下还没有文章</p>`;
 
   app.innerHTML = `
     <div class="container">
@@ -1106,9 +1215,7 @@ function renderTag(slug) {
     saveFollows(); renderTag(slug);
   });
   document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => {
-    tagSort = el.dataset.sort;
-    tagVisible = PAGE_SIZE;
-    renderTag(slug);
+    tagSort = el.dataset.sort; tagVisible = PAGE_SIZE; renderTag(slug);
   }));
   bindLoadMore(() => { tagVisible += PAGE_SIZE; renderTag(slug); });
 }
@@ -1121,6 +1228,7 @@ function renderMe() {
   const name = displayName();
   const myPosts = posts.filter(p => String(p.userId) === String(currentUser.id)).sort((a, b) => b.id - a.id);
   const myColls = collections.filter(c => String(c.userId) === String(currentUser.id)).sort((a, b) => b.id - a.id);
+  const myFavPosts = posts.filter(p => myFavorites.has(p.id)).sort((a, b) => b.id - a.id);
   const totalLikes = myPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
 
   let tabContent = '';
@@ -1129,14 +1237,18 @@ function renderMe() {
       const shown = myPosts.slice(0, meVisible);
       tabContent = shown.map(postCardHTML).join('');
       tabContent += loadMoreHTML(meVisible, myPosts.length, true);
-    } else {
-      tabContent = `<p class="empty">你还没有发布文章，<a href="#/write" style="color:var(--primary);">写一篇</a>吧</p>`;
-    }
+    } else tabContent = `<p class="empty">你还没有发布文章，<a href="#/write" style="color:var(--primary);">写一篇</a>吧</p>`;
+  } else if (meTab === 'favorites') {
+    if (myFavPosts.length) {
+      const shown = myFavPosts.slice(0, meFavVisible);
+      tabContent = shown.map(postCardHTML).join('');
+      tabContent += loadMoreHTML(meFavVisible, myFavPosts.length, true);
+    } else tabContent = `<p class="empty">你还没有收藏任何文章</p>`;
   } else if (meTab === 'collections') {
     tabContent = myColls.length
       ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>`
       : `<p class="empty">你还没有创建合集</p>`;
-  } else if (meTab === 'following') {
+  } else if (meTab === 'tags') {
     const followed = tags.filter(t => followedTags.includes(t.slug));
     if (followed.length) {
       tabContent = `<div class="tag-grid">${followed.map(t => {
@@ -1148,22 +1260,33 @@ function renderMe() {
             <div class="tc-meta">${count} 篇文章</div>
           </a>`;
       }).join('')}</div>`;
-    } else {
-      tabContent = `<p class="empty">你还没有关注任何标签，去 <a href="#/tags" style="color:var(--primary);">标签广场</a> 看看</p>`;
-    }
+    } else tabContent = `<p class="empty">你还没有关注任何标签</p>`;
+  } else if (meTab === 'authors') {
+    const followed = Array.from(followedAuthors);
+    if (followed.length) {
+      tabContent = `<div class="tag-grid">${followed.map(n => userCardHTML(n)).join('')}</div>`;
+    } else tabContent = `<p class="empty">你还没有关注任何作者</p>`;
   }
 
   app.innerHTML = `
     <div class="container">
       <div class="me-header">
-        <div class="me-avatar">${escapeHTML(name[0])}</div>
+        <div class="me-avatar-wrap" id="avatarWrap" title="点击更换头像">
+          ${currentUser.avatar
+            ? `<img class="me-avatar" src="${currentUser.avatar}" alt="" />`
+            : `<div class="me-avatar">${escapeHTML(name[0])}</div>`}
+          <div class="me-avatar-hint">更换</div>
+        </div>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none" />
         <div class="me-info">
           <h1>${escapeHTML(name)}</h1>
           <p class="me-email">登录名：${escapeHTML(currentUser.loginName)}</p>
           <div class="stat-row">
             <div class="stat-item"><strong>${myPosts.length}</strong>篇文章</div>
+            <div class="stat-item"><strong>${myFavorites.size}</strong>个收藏</div>
             <div class="stat-item"><strong>${myColls.length}</strong>个合集</div>
             <div class="stat-item"><strong>${followedTags.length}</strong>个关注标签</div>
+            <div class="stat-item"><strong>${followedAuthors.size}</strong>个关注作者</div>
             <div class="stat-item"><strong>${totalLikes}</strong>个赞</div>
           </div>
         </div>
@@ -1175,16 +1298,39 @@ function renderMe() {
       </div>
       <div class="tabs">
         <span class="tab ${meTab === 'posts' ? 'active' : ''}" data-me="posts">我的文章 (${myPosts.length})</span>
+        <span class="tab ${meTab === 'favorites' ? 'active' : ''}" data-me="favorites">我的收藏 (${myFavorites.size})</span>
         <span class="tab ${meTab === 'collections' ? 'active' : ''}" data-me="collections">我的合集 (${myColls.length})</span>
-        <span class="tab ${meTab === 'following' ? 'active' : ''}" data-me="following">关注的标签 (${followedTags.length})</span>
+        <span class="tab ${meTab === 'tags' ? 'active' : ''}" data-me="tags">关注的标签 (${followedTags.length})</span>
+        <span class="tab ${meTab === 'authors' ? 'active' : ''}" data-me="authors">关注的作者 (${followedAuthors.size})</span>
       </div>
       ${tabContent}
     </div>
   `;
 
+  // 头像上传
+  const wrap = document.getElementById('avatarWrap');
+  const input = document.getElementById('avatarInput');
+  wrap.addEventListener('click', () => input.click());
+  input.addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file) return;
+    const oldHtml = wrap.innerHTML;
+    wrap.innerHTML = '<div class="me-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:12px;">上传中</div>';
+    try {
+      const url = await uploadAvatar(file);
+      await saveAvatar(url);
+      renderHeader();
+      renderMe();
+      showSync('头像已更新');
+    } catch (err) {
+      console.error(err);
+      alert('头像上传失败：' + (err.message || '请重试'));
+      wrap.innerHTML = oldHtml;
+    }
+  });
+
   document.querySelectorAll('.tab[data-me]').forEach(el => el.addEventListener('click', () => {
     meTab = el.dataset.me;
-    meVisible = PAGE_SIZE;
+    meVisible = PAGE_SIZE; meFavVisible = PAGE_SIZE;
     renderMe();
   }));
 
@@ -1195,7 +1341,11 @@ function renderMe() {
     location.reload();
   });
 
-  bindLoadMore(() => { meVisible += PAGE_SIZE; renderMe(); });
+  bindLoadMore(() => {
+    if (meTab === 'posts') meVisible += PAGE_SIZE;
+    else if (meTab === 'favorites') meFavVisible += PAGE_SIZE;
+    renderMe();
+  });
 }
 
 /* ============ 他人主页 ============ */
@@ -1203,28 +1353,52 @@ function renderUser(name) {
   const decoded = decodeURIComponent(name);
   const list = posts.filter(p => p.author === decoded).sort((a, b) => b.id - a.id);
   const myColls = collections.filter(c => c.author === decoded);
+  const isMe = currentUser && decoded === displayName();
+  const isFollowing = followedAuthors.has(decoded);
+  const likes = list.reduce((s, p) => s + (p.likes || 0), 0);
 
-  let listHTML;
-  if (list.length) {
-    listHTML = list.map(postCardHTML).join('');
-  } else {
-    listHTML = `<p class="empty">TA 还没有发布文章</p>`;
-  }
-
+  const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">TA 还没有发布文章</p>`;
   const collHTML = myColls.length
     ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>`
     : `<p style="color:var(--text-3);font-size:14px;">TA 还没有创建合集</p>`;
 
+  const followBtn = !isMe && currentUser
+    ? `<button class="follow-btn ${isFollowing ? 'followed' : ''}" id="followAuthorBtn">${isFollowing ? '已关注' : '+ 关注'}</button>`
+    : '';
+  const loginHint = !currentUser
+    ? `<a href="#/login" class="mini-btn">登录后可关注</a>`
+    : '';
+
+  const avatarBlock = avatarURL(decoded)
+    ? `<img class="me-avatar" src="${avatarURL(decoded)}" alt="" />`
+    : `<div class="me-avatar">${escapeHTML(decoded[0])}</div>`;
+
   app.innerHTML = `
     <div class="container">
       <a class="back" href="#/">← 返回首页</a>
-      <h1>${escapeHTML(decoded)}</h1>
-      <p class="sub">${list.length} 篇文章 · ${myColls.length} 个合集</p>
+      <div class="me-header">
+        ${avatarBlock}
+        <div class="me-info">
+          <h1>${escapeHTML(decoded)}</h1>
+          <div class="stat-row">
+            <div class="stat-item"><strong>${list.length}</strong>篇文章</div>
+            <div class="stat-item"><strong>${myColls.length}</strong>个合集</div>
+            <div class="stat-item"><strong>${likes}</strong>个赞</div>
+          </div>
+        </div>
+        <div class="me-actions">${followBtn}${loginHint}</div>
+      </div>
       ${myColls.length ? `<h2>合集</h2>${collHTML}` : ''}
       <h2>文章</h2>
       ${listHTML}
     </div>
   `;
+
+  const fb = document.getElementById('followAuthorBtn');
+  if (fb) fb.addEventListener('click', async () => {
+    await toggleFollowAuthor(decoded);
+    renderUser(name);
+  });
 }
 
 /* ============ 合集广场 / 详情 / 编辑 ============ */
@@ -1256,9 +1430,7 @@ function renderCollection(id) {
     const shown = list.slice(0, collectionVisible);
     listHTML = shown.map(postCardHTML).join('');
     listHTML += loadMoreHTML(collectionVisible, list.length, true);
-  } else {
-    listHTML = `<p class="empty">这个合集下还没有文章</p>`;
-  }
+  } else listHTML = `<p class="empty">这个合集下还没有文章</p>`;
 
   app.innerHTML = `
     <div class="container">
@@ -1430,6 +1602,7 @@ function renderPost(id) {
     return t ? `<a class="tag" href="#/tag/${encodeURIComponent(t.slug)}">#${escapeHTML(t.name)}</a>` : '';
   }).join('');
   const liked = myLikes.includes(p.id);
+  const faved = myFavorites.has(p.id);
   const isMine = currentUser && String(p.userId) === String(currentUser.id);
   const coll = p.collectionId ? collections.find(c => c.id === p.collectionId) : null;
   const collBtnText = coll ? '📚 更换合集' : '📚 加入合集';
@@ -1442,7 +1615,7 @@ function renderPost(id) {
   const commentsHTML = p.comments.length
     ? p.comments.map(c => `
         <div class="comment-item">
-          <div class="c-author">${escapeHTML(c.author)} · ${c.date}</div>
+          <div class="c-author">${avatarHTML(c.author, 18, 'avatar-sm')} ${escapeHTML(c.author)} · ${c.date}</div>
           <div class="c-content">${escapeHTML(c.content)}</div>
         </div>`).join('')
     : `<p style="color:var(--text-3);font-size:14px;">还没有评论，来说两句吧</p>`;
@@ -1454,14 +1627,19 @@ function renderPost(id) {
        </div>`
     : `<p style="color:var(--text-3);font-size:14px;margin-top:12px;"><a href="#/login" style="color:var(--primary);">登录</a> 后可以评论</p>`;
 
+  const authorAvatar = avatarHTML(p.author, 40);
+
   app.innerHTML = `
     <div class="container">
       <a class="back" href="#/">← 返回首页</a>
       <h1>${escapeHTML(p.title)}</h1>
-      <p class="sub">
-        <a class="author-link" href="#/user/${encodeURIComponent(p.author)}">${escapeHTML(p.author)}</a>
-        · ${p.date}
-      </p>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        ${authorAvatar}
+        <div>
+          <a class="author-link" href="#/user/${encodeURIComponent(p.author)}" style="font-size:15px;font-weight:500;">${escapeHTML(p.author)}</a>
+          <div style="font-size:12px;color:var(--text-3);">${p.date}</div>
+        </div>
+      </div>
       <img class="post-cover" src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
       <div class="post-content">${escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>')}</div>
       <div class="tags" style="margin-top:24px;">${tagHTML}</div>
@@ -1469,6 +1647,7 @@ function renderPost(id) {
 
       <div class="action-bar">
         <button class="action-btn ${liked ? 'liked' : ''}" id="likeBtn">${liked ? '♥' : '♡'} 点赞 ${p.likes}</button>
+        <button class="action-btn ${faved ? 'faved' : ''}" id="favBtn">${faved ? '⭐' : '☆'} ${faved ? '已收藏' : '收藏'}</button>
         ${isMine ? `<button class="action-btn" id="collBtn">${collBtnText}</button>` : ''}
         ${isMine ? `<button class="action-btn" id="editBtn">编辑</button>` : ''}
         ${isMine ? `<button class="action-btn danger" id="deleteBtn">删除文章</button>` : ''}
@@ -1486,6 +1665,12 @@ function renderPost(id) {
     if (myLikes.includes(p.id)) { myLikes = myLikes.filter(x => x !== p.id); p.likes = Math.max(0, p.likes - 1); }
     else { myLikes.push(p.id); p.likes += 1; }
     saveLikes(); renderPost(p.id); await syncPost(p);
+  });
+
+  document.getElementById('favBtn').addEventListener('click', async () => {
+    if (!currentUser) { alert('请先登录'); location.hash = '#/login'; return; }
+    await toggleFavorite(p.id);
+    renderPost(p.id);
   });
 
   const collBtn = document.getElementById('collBtn');
@@ -1693,12 +1878,11 @@ function router() {
   const hash = location.hash || '#/';
   const parts = hash.slice(2).split('/');
 
-  // 切换页面时重置分页
   if (parts[0] !== 'search') searchVisible = PAGE_SIZE;
   if (parts[0] !== '') homeVisible = PAGE_SIZE;
   if (parts[0] !== 'tag') tagVisible = PAGE_SIZE;
   if (parts[0] !== 'collection') collectionVisible = PAGE_SIZE;
-  if (parts[0] !== 'me') meVisible = PAGE_SIZE;
+  if (parts[0] !== 'me') { meVisible = PAGE_SIZE; meFavVisible = PAGE_SIZE; }
 
   if (parts[0] === 'login') renderLogin();
   else if (parts[0] === 'register') renderRegister();
