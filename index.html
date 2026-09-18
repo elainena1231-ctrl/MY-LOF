@@ -66,11 +66,9 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; font-weight: bold;
   }
-
   h1 { font-size: 26px; margin-bottom: 6px; }
   h2 { font-size: 18px; margin: 24px 0 12px; }
   .sub { color: var(--text-3); margin-bottom: 24px; }
-
   .tags { display: flex; gap: 8px; flex-wrap: wrap; }
   .tag {
     padding: 6px 14px; background: var(--card); border: 1px solid var(--border);
@@ -78,7 +76,6 @@
     font-size: 14px; transition: all .2s;
   }
   .tag:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-
   .post {
     display: flex; gap: 16px; background: var(--card); border: 1px solid var(--border);
     border-radius: 12px; padding: 12px; margin-bottom: 14px;
@@ -92,7 +89,6 @@
   .post h3 { font-size: 16px; margin-bottom: 6px; color: var(--text); }
   .post p { color: var(--text-2); font-size: 14px; margin-bottom: 8px; }
   .post .meta { font-size: 12px; color: var(--text-3); }
-
   .back { color: var(--text-2); font-size: 14px; text-decoration: none; display: inline-block; margin-bottom: 16px; }
   .back:hover { color: var(--primary); }
   .empty { text-align: center; color: var(--text-3); padding: 60px 0; }
@@ -111,7 +107,6 @@
   }
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
-
   .form-group { margin-bottom: 20px; }
   .form-group label { display: block; font-size: 14px; color: var(--text-2); margin-bottom: 6px; font-weight: 500; }
   .form-group input, .form-group textarea, .form-group select {
@@ -299,7 +294,6 @@
     background: rgba(80,200,120,.15); color: #2a9d5c;
     padding: 12px; border-radius: 8px; font-size: 14px;
   }
-
   .tag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
   .tag-card {
     display: block; background: var(--card); border: 1px solid var(--border);
@@ -310,7 +304,6 @@
   .tag-card .tc-name { font-size: 16px; font-weight: bold; color: var(--primary); margin-bottom: 6px; }
   .tag-card .tc-desc { font-size: 13px; color: var(--text-2); margin-bottom: 8px; min-height: 38px; }
   .tag-card .tc-meta { font-size: 12px; color: var(--text-3); }
-
   .me-header {
     display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
     background: var(--card); border: 1px solid var(--border);
@@ -329,7 +322,6 @@
   .stat-row { display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap; }
   .stat-item { font-size: 14px; color: var(--text-2); }
   .stat-item strong { color: var(--primary); font-size: 18px; margin-right: 4px; }
-
   @media (max-width: 640px) {
     .header .container { gap: 8px; }
     .main-nav a { padding: 6px 10px; font-size: 13px; }
@@ -356,7 +348,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://rkrroshmqxzuqyilggjm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_-uNERFSmoVIUo1j4DO6cPw_9zpCGKwZ';
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const tags = [
@@ -366,7 +357,56 @@ const tags = [
   { slug: 'design', name: '设计', desc: 'UI、平面、角色设计' },
 ];
 
-let currentUser = null;
+// ==================== 用户 session ====================
+const KEY_USER = 'my_user';
+let currentUser = JSON.parse(localStorage.getItem(KEY_USER) || 'null');
+
+function saveUser(u) {
+  if (u) localStorage.setItem(KEY_USER, JSON.stringify(u));
+  else localStorage.removeItem(KEY_USER);
+  currentUser = u;
+}
+
+function displayName() {
+  return currentUser ? currentUser.displayName : '游客';
+}
+
+// ==================== 密码 hash ====================
+async function hashPassword(password) {
+  const data = new TextEncoder().encode(password + 'my-lof-salt-v1');
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ==================== 用户操作 ====================
+async function registerUser(loginName, dispName, password) {
+  const passwordHash = await hashPassword(password);
+  const { data: existing } = await supabase
+    .from('app_users').select('id').eq('login_name', loginName).maybeSingle();
+  if (existing) throw new Error('这个登录名已经被使用了，换一个吧');
+
+  const { data, error } = await supabase.from('app_users').insert({
+    login_name: loginName,
+    display_name: dispName,
+    password_hash: passwordHash,
+  }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function loginUser(loginName, password) {
+  const passwordHash = await hashPassword(password);
+  const { data, error } = await supabase.from('app_users')
+    .select('*')
+    .eq('login_name', loginName)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('登录名或密码错误');
+  if (data.password_hash !== passwordHash) throw new Error('登录名或密码错误');
+  return data;
+}
+
+// ==================== 数据 ====================
 let posts = [];
 let collections = [];
 let loaded = false;
@@ -375,12 +415,6 @@ let myLikes = JSON.parse(localStorage.getItem('my_likes') || '[]');
 
 function saveFollows() { localStorage.setItem('my_followed_tags', JSON.stringify(followedTags)); }
 function saveLikes() { localStorage.setItem('my_likes', JSON.stringify(myLikes)); }
-
-function displayName() {
-  if (!currentUser) return '游客';
-  const meta = currentUser.user_metadata || {};
-  return meta.username || currentUser.email.split('@')[0];
-}
 
 let syncTimer = null;
 function showSync(text, isError = false) {
@@ -406,7 +440,7 @@ function postToRow(p) {
     id: p.id, title: p.title, excerpt: p.excerpt, content: p.content,
     author: p.author, tags: p.tags, cover: p.cover, date: p.date,
     likes: p.likes, comments: p.comments, collection_id: p.collectionId,
-    user_id: p.userId,
+    user_id: p.userId ? String(p.userId) : null,
   };
 }
 function rowToColl(r) {
@@ -418,7 +452,7 @@ function rowToColl(r) {
 function collToRow(c) {
   return {
     id: c.id, name: c.name, desc_text: c.desc, author: c.author,
-    cover: c.cover, date: c.date, user_id: c.userId,
+    cover: c.cover, date: c.date, user_id: c.userId ? String(c.userId) : null,
   };
 }
 
@@ -457,13 +491,11 @@ async function removeColl(c) {
 }
 
 const app = document.getElementById('app');
-
 if (localStorage.getItem('my_theme') === 'dark') document.body.classList.add('dark');
 
 function currentRoute() {
   const hash = location.hash || '#/';
-  const parts = hash.slice(2).split('/');
-  return parts[0] || '';
+  return hash.slice(2).split('/')[0] || '';
 }
 
 function renderHeader() {
@@ -473,7 +505,7 @@ function renderHeader() {
     '': r === '' ? 'active' : '',
     'tags': r === 'tags' ? 'active' : '',
     'collections': r === 'collections' ? 'active' : '',
-    'me': (r === 'me') ? 'active' : '',
+    'me': r === 'me' ? 'active' : '',
   };
 
   nav.innerHTML = `
@@ -552,7 +584,7 @@ function requireLogin(msg = '请先登录') {
   return false;
 }
 
-/* ============ 图片上传到 Supabase Storage ============ */
+/* ============ 图片上传 ============ */
 function compressImageToBlob(file, maxWidth, quality) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -564,10 +596,7 @@ function compressImageToBlob(file, maxWidth, quality) {
         if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        canvas.toBlob(blob => {
-          if (blob) resolve(blob);
-          else reject(new Error('图片压缩失败'));
-        }, 'image/jpeg', quality);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('图片压缩失败')), 'image/jpeg', quality);
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -580,20 +609,16 @@ function compressImageToBlob(file, maxWidth, quality) {
 async function uploadImage(file) {
   if (!currentUser) throw new Error('请先登录');
   const blob = await compressImageToBlob(file, 1200, 0.85);
-  const filename = `${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const filename = `user-${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
   const { data, error } = await supabase.storage
     .from('images')
-    .upload(filename, blob, {
-      contentType: 'image/jpeg',
-      cacheControl: '31536000',
-      upsert: false,
-    });
+    .upload(filename, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
   if (error) throw error;
   const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(data.path);
   return publicUrl;
 }
 
-/* ============ 登录（用登录名或邮箱） ============ */
+/* ============ 登录 ============ */
 function renderLogin() {
   app.innerHTML = `
     <div class="container">
@@ -604,7 +629,6 @@ function renderLogin() {
         <div class="form-group">
           <label>登录名</label>
           <input type="text" id="loginName" placeholder="注册时填的登录名" autocomplete="username" />
-          <p class="form-hint">如果你之前是用邮箱注册的，直接填邮箱也行。</p>
         </div>
         <div class="form-group">
           <label>密码</label>
@@ -616,29 +640,29 @@ function renderLogin() {
     </div>
   `;
   const submit = async () => {
-    const input = document.getElementById('loginName').value.trim().toLowerCase();
+    const loginName = document.getElementById('loginName').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const errBox = document.getElementById('authError');
     errBox.innerHTML = '';
-    if (!input || !password) { errBox.innerHTML = '<div class="auth-error">请填写登录名和密码</div>'; return; }
-    const email = input.includes('@') ? input : (input + '@example.com');
+    if (!loginName || !password) { errBox.innerHTML = '<div class="auth-error">请填写登录名和密码</div>'; return; }
+
     const btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = '登录中…';
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      const msg = /Invalid login/i.test(error.message) ? '登录名或密码错误' : error.message;
-      errBox.innerHTML = `<div class="auth-error">${escapeHTML(msg)}</div>`;
+    try {
+      const user = await loginUser(loginName, password);
+      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name });
+      location.hash = '#/me';
+      location.reload();
+    } catch (e) {
+      errBox.innerHTML = `<div class="auth-error">${escapeHTML(e.message)}</div>`;
       btn.disabled = false; btn.textContent = '登录';
-      return;
     }
-    location.hash = '#/me';
-    location.reload();
   };
   document.getElementById('loginBtn').addEventListener('click', submit);
   document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
 }
 
-/* ============ 注册（不需要邮箱） ============ */
+/* ============ 注册 ============ */
 function renderRegister() {
   app.innerHTML = `
     <div class="container">
@@ -651,7 +675,7 @@ function renderRegister() {
           <input type="text" id="displayNameInput" placeholder="例如：小明" maxlength="20" />
         </div>
         <div class="form-group">
-          <label>登录名（登录用，只能小写字母/数字/下划线）</label>
+          <label>登录名（登录用）</label>
           <input type="text" id="loginName" placeholder="例如：xiaoming" autocomplete="username" maxlength="20" />
           <p class="form-hint">3-20 位，只能包含小写字母、数字、下划线。</p>
         </div>
@@ -681,32 +705,17 @@ function renderRegister() {
     }
     if (password.length < 6) { errBox.innerHTML = '<div class="auth-error">密码至少 6 位</div>'; return; }
 
-    const email = loginNameVal + '@example.com';
     const btn = document.getElementById('registerBtn');
     btn.disabled = true; btn.textContent = '注册中…';
-
-    const { data, error } = await supabase.auth.signUp({
-      email, password,
-      options: { data: { username: displayNameVal, login_name: loginNameVal } },
-    });
-
-    if (error) {
-      let msg = error.message;
-      if (/already/i.test(msg)) msg = '这个登录名已经被使用了，换一个吧';
-      errBox.innerHTML = `<div class="auth-error">${escapeHTML(msg)}</div>`;
+    try {
+      const user = await registerUser(loginNameVal, displayNameVal, password);
+      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name });
+      location.hash = '#/me';
+      location.reload();
+    } catch (e) {
+      errBox.innerHTML = `<div class="auth-error">${escapeHTML(e.message)}</div>`;
       btn.disabled = false; btn.textContent = '注册';
-      return;
     }
-    if (!data.session) {
-      errBox.innerHTML = `<div class="auth-success">
-        注册成功，但还需要邮箱验证。<br>
-        请回 Supabase → Authentication → Sign In / Providers，把「Confirm email」关掉，然后重新注册。
-      </div>`;
-      btn.disabled = false; btn.textContent = '注册';
-      return;
-    }
-    location.hash = '#/me';
-    location.reload();
   };
   document.getElementById('registerBtn').addEventListener('click', submit);
 }
@@ -748,11 +757,9 @@ function renderHome() {
     <div class="container">
       <h1>发现好内容</h1>
       <p class="sub">来自所有创作者的图文作品</p>
-
       <div class="search-bar">
         <input type="text" id="searchInput" placeholder="搜索标题、正文、作者或标签…" value="${escapeHTML(homeKeyword)}" />
       </div>
-
       <div class="tabs">
         <span class="tab ${homeTab === 'all' ? 'active' : ''}" data-tab="all">推荐</span>
         <span class="tab ${homeTab === 'following' ? 'active' : ''}" data-tab="following">我关注的标签</span>
@@ -788,7 +795,6 @@ function renderTags() {
       </a>
     `;
   }).join('');
-
   app.innerHTML = `
     <div class="container">
       <h1>标签广场</h1>
@@ -837,12 +843,10 @@ let meTab = 'posts';
 
 function renderMe() {
   if (!requireLogin('请先登录')) return;
-
   const name = displayName();
-  const myPosts = posts.filter(p => p.userId === currentUser.id).sort((a, b) => b.id - a.id);
-  const myColls = collections.filter(c => c.userId === currentUser.id).sort((a, b) => b.id - a.id);
+  const myPosts = posts.filter(p => String(p.userId) === String(currentUser.id)).sort((a, b) => b.id - a.id);
+  const myColls = collections.filter(c => String(c.userId) === String(currentUser.id)).sort((a, b) => b.id - a.id);
   const totalLikes = myPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
-  const loginName = (currentUser.user_metadata || {}).login_name || '';
 
   let tabContent = '';
   if (meTab === 'posts') {
@@ -876,7 +880,7 @@ function renderMe() {
         <div class="me-avatar">${escapeHTML(name[0])}</div>
         <div class="me-info">
           <h1>${escapeHTML(name)}</h1>
-          <p class="me-email">登录名：${escapeHTML(loginName || currentUser.email.split('@')[0])}</p>
+          <p class="me-email">登录名：${escapeHTML(currentUser.loginName)}</p>
           <div class="stat-row">
             <div class="stat-item"><strong>${myPosts.length}</strong>篇文章</div>
             <div class="stat-item"><strong>${myColls.length}</strong>个合集</div>
@@ -890,25 +894,22 @@ function renderMe() {
           <button class="mini-btn" id="logoutBtn" style="color:#e33;border-color:#e33;">退出登录</button>
         </div>
       </div>
-
       <div class="tabs">
         <span class="tab ${meTab === 'posts' ? 'active' : ''}" data-me="posts">我的文章 (${myPosts.length})</span>
         <span class="tab ${meTab === 'collections' ? 'active' : ''}" data-me="collections">我的合集 (${myColls.length})</span>
         <span class="tab ${meTab === 'following' ? 'active' : ''}" data-me="following">关注的标签 (${followedTags.length})</span>
       </div>
-
       ${tabContent}
     </div>
   `;
 
   document.querySelectorAll('.tab[data-me]').forEach(el => el.addEventListener('click', () => {
-    meTab = el.dataset.me;
-    renderMe();
+    meTab = el.dataset.me; renderMe();
   }));
 
-  document.getElementById('logoutBtn').addEventListener('click', async () => {
+  document.getElementById('logoutBtn').addEventListener('click', () => {
     if (!confirm('确定退出登录？')) return;
-    await supabase.auth.signOut();
+    saveUser(null);
     location.hash = '#/';
     location.reload();
   });
@@ -919,7 +920,6 @@ function renderUser(name) {
   const decoded = decodeURIComponent(name);
   const list = posts.filter(p => p.author === decoded).sort((a, b) => b.id - a.id);
   const myColls = collections.filter(c => c.author === decoded);
-
   const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">TA 还没有发布文章</p>`;
   const collHTML = myColls.length
     ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>`
@@ -958,7 +958,7 @@ function renderCollections() {
 function renderCollection(id) {
   const c = collections.find(x => x.id === Number(id));
   if (!c) { app.innerHTML = `<div class="container"><p class="empty">合集不存在</p></div>`; return; }
-  const isMine = currentUser && c.userId === currentUser.id;
+  const isMine = currentUser && String(c.userId) === String(currentUser.id);
   const list = posts.filter(p => p.collectionId === c.id).sort((a, b) => b.id - a.id);
   const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">这个合集下还没有文章</p>`;
 
@@ -1003,7 +1003,7 @@ let collectionCoverData = null;
 function renderCollectionEdit(editId) {
   if (!requireLogin('请先登录后再创建合集')) return;
   const editing = editId ? collections.find(x => x.id === Number(editId)) : null;
-  if (editId && (!editing || editing.userId !== currentUser.id)) {
+  if (editId && (!editing || String(editing.userId) !== String(currentUser.id))) {
     app.innerHTML = `<div class="container"><p class="empty">合集不存在或没有权限</p></div>`;
     return;
   }
@@ -1079,7 +1079,7 @@ function renderCollectionEdit(editId) {
 
 /* ============ 文章详情 ============ */
 function showCollectionPicker(p) {
-  const myColls = collections.filter(c => c.userId === currentUser.id);
+  const myColls = collections.filter(c => String(c.userId) === String(currentUser.id));
   const optionsHTML = myColls.length
     ? myColls.map(c => {
         const count = posts.filter(x => x.collectionId === c.id).length;
@@ -1131,7 +1131,7 @@ function renderPost(id) {
     return t ? `<a class="tag" href="#/tag/${t.slug}">#${t.name}</a>` : '';
   }).join('');
   const liked = myLikes.includes(p.id);
-  const isMine = currentUser && p.userId === currentUser.id;
+  const isMine = currentUser && String(p.userId) === String(currentUser.id);
   const coll = p.collectionId ? collections.find(c => c.id === p.collectionId) : null;
   const collBtnText = coll ? '📚 更换合集' : '📚 加入合集';
 
@@ -1226,7 +1226,7 @@ let coverData = null;
 function renderWrite(editId) {
   if (!requireLogin('请先登录后再发布文章')) return;
   const editing = editId ? posts.find(x => x.id === Number(editId)) : null;
-  if (editId && (!editing || editing.userId !== currentUser.id)) {
+  if (editId && (!editing || String(editing.userId) !== String(currentUser.id))) {
     app.innerHTML = `<div class="container"><p class="empty">文章不存在或没有权限</p></div>`;
     return;
   }
@@ -1238,7 +1238,7 @@ function renderWrite(editId) {
     `<span class="tag-choice ${selectedTags.includes(t.slug) ? 'active' : ''}" data-slug="${t.slug}">#${t.name}</span>`
   ).join('');
 
-  const myColls = collections.filter(c => c.userId === currentUser.id);
+  const myColls = collections.filter(c => String(c.userId) === String(currentUser.id));
   const currentCollId = editing && editing.collectionId ? editing.collectionId : '';
   const collOptions = myColls.map(c =>
     `<option value="${c.id}" ${currentCollId === c.id ? 'selected' : ''}>📚 ${escapeHTML(c.name)}</option>`
@@ -1381,14 +1381,6 @@ app.innerHTML = `<div class="loading-screen"><div class="spinner"></div><div>正
 
 async function init() {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    currentUser = session ? session.user : null;
-
-    supabase.auth.onAuthStateChange((_event, sess) => {
-      currentUser = sess ? sess.user : null;
-      renderHeader();
-    });
-
     await loadAll();
     router();
   } catch (e) {
