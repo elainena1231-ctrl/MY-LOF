@@ -322,6 +322,13 @@
   .stat-row { display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap; }
   .stat-item { font-size: 14px; color: var(--text-2); }
   .stat-item strong { color: var(--primary); font-size: 18px; margin-right: 4px; }
+  .new-tag-row { display: flex; gap: 8px; margin-top: 10px; }
+  .new-tag-row input {
+    flex: 1; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    background: var(--card); color: var(--text); outline: none;
+  }
+  .new-tag-row input:focus { border-color: var(--primary); }
   @media (max-width: 640px) {
     .header .container { gap: 8px; }
     .main-nav a { padding: 6px 10px; font-size: 13px; }
@@ -350,12 +357,8 @@ const SUPABASE_URL = 'https://rkrroshmqxzuqyilggjm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_-uNERFSmoVIUo1j4DO6cPw_9zpCGKwZ';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const tags = [
-  { slug: 'illustration', name: '插画', desc: '手绘、板绘、原创插画' },
-  { slug: 'photography', name: '摄影', desc: '人像、风景、街拍' },
-  { slug: 'writing', name: '写作', desc: '小说、随笔、散文' },
-  { slug: 'design', name: '设计', desc: 'UI、平面、角色设计' },
-];
+// 标签从数据库加载
+let tags = [];
 
 // ==================== 用户 session ====================
 const KEY_USER = 'my_user';
@@ -455,18 +458,53 @@ function collToRow(c) {
     cover: c.cover, date: c.date, user_id: c.userId ? String(c.userId) : null,
   };
 }
+function rowToTag(r) {
+  return { id: r.id, slug: r.slug, name: r.name, desc: r.description || '' };
+}
 
 async function loadAll() {
   const { data: pData, error: pErr } = await supabase.from('posts').select('*').order('id', { ascending: true });
   if (pErr) throw pErr;
   const { data: cData, error: cErr } = await supabase.from('collections').select('*').order('id', { ascending: true });
   if (cErr) throw cErr;
+  const { data: tData, error: tErr } = await supabase.from('tags').select('*').order('id', { ascending: true });
+  if (tErr) throw tErr;
+
   posts = (pData || []).map(rowToPost);
   collections = (cData || []).map(rowToColl);
+  tags = (tData || []).map(rowToTag);
+
   posts.forEach(p => {
     if (p.collectionId && !collections.find(c => c.id === p.collectionId)) p.collectionId = null;
   });
   loaded = true;
+}
+
+async function createTag(name) {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('标签名不能为空');
+  const existing = tags.find(t => t.name === trimmed);
+  if (existing) return existing;
+
+  const { data, error } = await supabase.from('tags').insert({
+    slug: trimmed,
+    name: trimmed,
+    description: '',
+    created_by: currentUser ? String(currentUser.id) : null,
+  }).select().single();
+
+  if (error) {
+    if (/duplicate|unique/i.test(error.message)) {
+      const { data: all } = await supabase.from('tags').select('*').order('id', { ascending: true });
+      tags = (all || []).map(rowToTag);
+      const found = tags.find(t => t.name === trimmed);
+      if (found) return found;
+    }
+    throw error;
+  }
+  const newTag = rowToTag(data);
+  tags.push(newTag);
+  return newTag;
 }
 
 async function syncPost(p) {
@@ -737,7 +775,7 @@ function renderHome() {
       p.author.toLowerCase().includes(kw) ||
       p.tags.some(s => {
         const t = tags.find(x => x.slug === s);
-        return t && (t.name.includes(kw) || s.includes(kw));
+        return t && (t.name.toLowerCase().includes(kw) || s.toLowerCase().includes(kw));
       })
     );
   }
@@ -788,9 +826,9 @@ function renderTags() {
   const cards = tags.map(t => {
     const count = posts.filter(p => p.tags.includes(t.slug)).length;
     return `
-      <a class="tag-card" href="#/tag/${t.slug}">
+      <a class="tag-card" href="#/tag/${encodeURIComponent(t.slug)}">
         <div class="tc-name">#${escapeHTML(t.name)}</div>
-        <div class="tc-desc">${escapeHTML(t.desc)}</div>
+        <div class="tc-desc">${escapeHTML(t.desc || '')}</div>
         <div class="tc-meta">${count} 篇文章</div>
       </a>
     `;
@@ -799,7 +837,7 @@ function renderTags() {
     <div class="container">
       <h1>标签广场</h1>
       <p class="sub">按兴趣浏览，关注你喜欢的标签</p>
-      <div class="tag-grid">${cards}</div>
+      ${tags.length ? `<div class="tag-grid">${cards}</div>` : `<p class="empty">还没有任何标签，写文章时可以自己创建</p>`}
     </div>
   `;
 }
@@ -807,10 +845,11 @@ function renderTags() {
 /* ============ 标签详情 ============ */
 let tagSort = 'new';
 function renderTag(slug) {
-  const tag = tags.find(t => t.slug === slug);
+  const decoded = decodeURIComponent(slug);
+  const tag = tags.find(t => t.slug === decoded);
   if (!tag) { app.innerHTML = `<div class="container"><p class="empty">标签不存在</p></div>`; return; }
-  const isFollowed = followedTags.includes(slug);
-  let list = posts.filter(p => p.tags.includes(slug));
+  const isFollowed = followedTags.includes(tag.slug);
+  let list = posts.filter(p => p.tags.includes(tag.slug));
   if (tagSort === 'hot') list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   else list.sort((a, b) => b.id - a.id);
   const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">这个标签下还没有文章</p>`;
@@ -819,10 +858,10 @@ function renderTag(slug) {
     <div class="container">
       <a class="back" href="#/tags">← 返回标签广场</a>
       <div class="tag-header">
-        <h1 style="margin:0;">#${tag.name}</h1>
+        <h1 style="margin:0;">#${escapeHTML(tag.name)}</h1>
         <button class="follow-btn ${isFollowed ? 'followed' : ''}" id="followBtn">${isFollowed ? '已关注' : '+ 关注'}</button>
       </div>
-      <p class="sub">${tag.desc} · ${list.length} 篇文章</p>
+      <p class="sub">${escapeHTML(tag.desc || '')} · ${list.length} 篇文章</p>
       <div class="tabs">
         <span class="tab ${tagSort === 'new' ? 'active' : ''}" data-sort="new">最新</span>
         <span class="tab ${tagSort === 'hot' ? 'active' : ''}" data-sort="hot">热门</span>
@@ -831,8 +870,8 @@ function renderTag(slug) {
     </div>
   `;
   document.getElementById('followBtn').addEventListener('click', () => {
-    if (followedTags.includes(slug)) followedTags = followedTags.filter(s => s !== slug);
-    else followedTags.push(slug);
+    if (followedTags.includes(tag.slug)) followedTags = followedTags.filter(s => s !== tag.slug);
+    else followedTags.push(tag.slug);
     saveFollows(); renderTag(slug);
   });
   document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => { tagSort = el.dataset.sort; renderTag(slug); }));
@@ -863,9 +902,9 @@ function renderMe() {
       tabContent = `<div class="tag-grid">${followed.map(t => {
         const count = posts.filter(p => p.tags.includes(t.slug)).length;
         return `
-          <a class="tag-card" href="#/tag/${t.slug}">
+          <a class="tag-card" href="#/tag/${encodeURIComponent(t.slug)}">
             <div class="tc-name">#${escapeHTML(t.name)}</div>
-            <div class="tc-desc">${escapeHTML(t.desc)}</div>
+            <div class="tc-desc">${escapeHTML(t.desc || '')}</div>
             <div class="tc-meta">${count} 篇文章</div>
           </a>`;
       }).join('')}</div>`;
@@ -1128,7 +1167,7 @@ function renderPost(id) {
 
   const tagHTML = p.tags.map(s => {
     const t = tags.find(x => x.slug === s);
-    return t ? `<a class="tag" href="#/tag/${t.slug}">#${t.name}</a>` : '';
+    return t ? `<a class="tag" href="#/tag/${encodeURIComponent(t.slug)}">#${escapeHTML(t.name)}</a>` : '';
   }).join('');
   const liked = myLikes.includes(p.id);
   const isMine = currentUser && String(p.userId) === String(currentUser.id);
@@ -1234,9 +1273,20 @@ function renderWrite(editId) {
   selectedTags = editing ? editing.tags.slice() : [];
   coverData = null;
 
-  const tagChoices = tags.map(t =>
-    `<span class="tag-choice ${selectedTags.includes(t.slug) ? 'active' : ''}" data-slug="${t.slug}">#${t.name}</span>`
-  ).join('');
+  function tagChoicesHTML() {
+    return tags.map(t =>
+      `<span class="tag-choice ${selectedTags.includes(t.slug) ? 'active' : ''}" data-slug="${escapeHTML(t.slug)}">#${escapeHTML(t.name)}</span>`
+    ).join('');
+  }
+  function bindTagChoiceEvents() {
+    document.querySelectorAll('.tag-choice').forEach(el => {
+      el.addEventListener('click', () => {
+        const slug = el.dataset.slug;
+        if (selectedTags.includes(slug)) { selectedTags = selectedTags.filter(s => s !== slug); el.classList.remove('active'); }
+        else { selectedTags.push(slug); el.classList.add('active'); }
+      });
+    });
+  }
 
   const myColls = collections.filter(c => String(c.userId) === String(currentUser.id));
   const currentCollId = editing && editing.collectionId ? editing.collectionId : '';
@@ -1270,7 +1320,12 @@ function renderWrite(editId) {
 
       <div class="form-group">
         <label>选择标签（可多选）</label>
-        <div class="tag-choices" id="tagChoices">${tagChoices}</div>
+        <div class="tag-choices" id="tagChoices">${tagChoicesHTML()}</div>
+        <div class="new-tag-row">
+          <input type="text" id="newTagInput" placeholder="输入新标签名，例如：旅行" maxlength="20" />
+          <button type="button" class="mini-btn" id="addTagBtn">+ 添加</button>
+        </div>
+        <p class="form-hint">输入后点「添加」，新标签会立刻出现在上面并自动选中。</p>
       </div>
 
       <div class="form-group">
@@ -1287,12 +1342,32 @@ function renderWrite(editId) {
     </div>
   `;
 
-  document.querySelectorAll('.tag-choice').forEach(el => {
-    el.addEventListener('click', () => {
-      const slug = el.dataset.slug;
-      if (selectedTags.includes(slug)) { selectedTags = selectedTags.filter(s => s !== slug); el.classList.remove('active'); }
-      else { selectedTags.push(slug); el.classList.add('active'); }
-    });
+  bindTagChoiceEvents();
+
+  // 新建标签
+  const newTagInput = document.getElementById('newTagInput');
+  const addTagBtn = document.getElementById('addTagBtn');
+  const doAddTag = async () => {
+    const raw = newTagInput.value.trim();
+    if (!raw) return;
+    addTagBtn.disabled = true; addTagBtn.textContent = '添加中…';
+    try {
+      const tag = await createTag(raw);
+      if (!selectedTags.includes(tag.slug)) selectedTags.push(tag.slug);
+      const container = document.getElementById('tagChoices');
+      container.innerHTML = tagChoicesHTML();
+      bindTagChoiceEvents();
+      newTagInput.value = '';
+    } catch (err) {
+      console.error(err);
+      alert('创建标签失败：' + (err.message || '请重试'));
+    } finally {
+      addTagBtn.disabled = false; addTagBtn.textContent = '+ 添加';
+    }
+  };
+  addTagBtn.addEventListener('click', doAddTag);
+  newTagInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); doAddTag(); }
   });
 
   const uploadBox = document.getElementById('uploadBox');
