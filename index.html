@@ -57,6 +57,13 @@
     height: 16px; line-height: 16px; text-align: center;
     font-weight: bold;
   }
+  .notif-badge.pulse {
+    animation: pulse .8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
   .write-btn {
     padding: 8px 16px; background: var(--primary); color: #fff;
     border-radius: 999px; text-decoration: none; font-size: 13px;
@@ -80,7 +87,6 @@
   }
   .avatar-sm { width: 20px; height: 20px; font-size: 10px; }
 
-  /* 移动端底部导航 */
   .mobile-nav {
     display: none;
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -106,9 +112,6 @@
   }
   .mobile-nav a.active { color: var(--primary); }
   .mobile-nav a .mnav-icon { font-size: 20px; line-height: 1; }
-  .mobile-nav a .notif-badge {
-    top: 0; right: calc(50% - 16px);
-  }
   .mobile-nav a.mnav-write .mnav-icon {
     background: var(--primary); color: #fff;
     width: 40px; height: 40px; border-radius: 50%;
@@ -218,7 +221,7 @@
   .post-content ul, .post-content ol { padding-left: 26px; margin: 14px 0; }
   .post-content li { margin-bottom: 6px; }
   .post-content a { color: var(--primary); }
-  .post-content img { max-width: 100%; border-radius: 12px; margin: 14px 0; display: block; }
+  .post-content img { max-width: 100%; border-radius: 12px; margin: 14px 0; display: block; cursor: zoom-in; }
   .author-link { color: var(--primary); text-decoration: none; }
   .author-link:hover { text-decoration: underline; }
   .action-bar { display: flex; gap: 12px; margin: 28px 0; flex-wrap: wrap; }
@@ -370,6 +373,26 @@
   }
   .sync-status.show { opacity: 1; }
   .sync-status.error { color: #e33; border-color: #e33; }
+
+  /* 实时通知 toast */
+  .toast-notif {
+    position: fixed; top: 76px; right: 16px;
+    background: var(--primary); color: #fff;
+    padding: 12px 20px; border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(255,92,92,.4);
+    z-index: 300; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    animation: toastSlideIn .3s ease;
+  }
+  @keyframes toastSlideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @media (max-width: 768px) {
+    .toast-notif { top: auto; bottom: 90px; left: 16px; right: 16px; justify-content: center; }
+  }
+
   .auth-card {
     max-width: 400px; margin: 60px auto;
     background: var(--card); border: 1px solid var(--border);
@@ -485,7 +508,6 @@
     background: var(--primary); border-radius: 50%;
     margin-left: 6px; vertical-align: middle;
   }
-  /* 草稿恢复提示 */
   .draft-banner {
     display: flex; gap: 12px; align-items: center;
     background: rgba(255,92,92,.08);
@@ -507,7 +529,6 @@
     font-size: 12px; color: var(--text-3);
     margin-left: 12px;
   }
-  /* Quill 编辑器 */
   .ql-toolbar.ql-snow {
     border-radius: 12px 12px 0 0;
     border-color: var(--border);
@@ -576,6 +597,92 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 let tags = [];
 let allUsers = [];
 let usersByName = {};
+
+// ==================== 实时通知（轮询） ====================
+const POLL_INTERVAL = 30000; // 30 秒
+let pollTimer = null;
+let pollPaused = false;
+
+function startPolling() {
+  stopPolling();
+  if (!currentUser) return;
+  pollTimer = setInterval(checkNewNotifications, POLL_INTERVAL);
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+async function checkNewNotifications() {
+  if (!currentUser || !loaded || pollPaused) return;
+  try {
+    const uid = String(currentUser.id);
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', uid)
+      .eq('is_read', false);
+    if (error) { console.warn('轮询失败', error); return; }
+    const newCount = count || 0;
+    if (newCount > myUnreadCount) {
+      const diff = newCount - myUnreadCount;
+      myUnreadCount = newCount;
+      renderHeader();
+      showNewNotifToast(diff);
+      // 如果在通知页，直接刷新
+      if (currentRoute() === 'notifications') {
+        await reloadNotifications();
+        renderNotifications();
+      } else {
+        // 后台预加载通知列表
+        reloadNotifications().catch(() => {});
+      }
+    } else if (newCount < myUnreadCount) {
+      // 别的标签页标记了已读
+      myUnreadCount = newCount;
+      renderHeader();
+    }
+  } catch (e) {
+    console.warn('轮询异常', e);
+  }
+}
+
+async function reloadNotifications() {
+  if (!currentUser) return;
+  const uid = String(currentUser.id);
+  const { data, error } = await supabase.from('notifications')
+    .select('*').eq('user_id', uid)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) return;
+  myNotifications = (data || []).map(rowToNotif);
+  myUnreadCount = myNotifications.filter(n => !n.isRead).length;
+}
+
+function showNewNotifToast(diff) {
+  // 移除已有的
+  document.querySelectorAll('.toast-notif').forEach(el => el.remove());
+  const el = document.createElement('div');
+  el.className = 'toast-notif';
+  el.innerHTML = `<span>🔔</span><span>你有 ${diff} 条新通知</span>`;
+  el.addEventListener('click', () => {
+    location.hash = '#/notifications';
+    el.remove();
+  });
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 6000);
+}
+
+// 页面切换时暂停/恢复
+document.addEventListener('visibilitychange', () => {
+  pollPaused = document.hidden;
+  if (!document.hidden && currentUser) {
+    checkNewNotifications();
+  }
+});
 
 // ==================== 富文本工具 ====================
 function looksLikeHTML(s) {
@@ -896,7 +1003,6 @@ function draftKey(editingId) {
   const uid = currentUser ? currentUser.id : 'anon';
   return `draft_${uid}_${editingId || 'new'}`;
 }
-
 function loadDraft(editingId) {
   try {
     const raw = localStorage.getItem(draftKey(editingId));
@@ -905,9 +1011,6 @@ function loadDraft(editingId) {
 }
 function clearDraft(editingId) {
   try { localStorage.removeItem(draftKey(editingId)); } catch (e) {}
-}
-function hasDraft(editingId) {
-  try { return !!localStorage.getItem(draftKey(editingId)); } catch (e) { return false; }
 }
 
 // ==================== 渲染头部 ====================
@@ -962,7 +1065,7 @@ function renderHeader() {
   const right = document.getElementById('navRight');
   const searchBtn = `<a href="#/search" class="icon-btn" id="searchNavBtn" title="搜索">🔍</a>`;
   const notifBtn = currentUser
-    ? `<a href="#/notifications" class="icon-btn" id="notifNavBtn" title="通知">🔔${myUnreadCount > 0 ? `<span class="notif-badge">${myUnreadCount > 99 ? '99+' : myUnreadCount}</span>` : ''}</a>`
+    ? `<a href="#/notifications" class="icon-btn" id="notifNavBtn" title="通知">🔔${myUnreadCount > 0 ? `<span class="notif-badge pulse">${myUnreadCount > 99 ? '99+' : myUnreadCount}</span>` : ''}</a>`
     : '';
   const themeBtn = `<button class="icon-btn" id="themeBtn" title="切换深色模式">🌙</button>`;
   const writeBtn = `<a href="#/write" class="write-btn">✏️ 写文章</a>`;
@@ -991,7 +1094,6 @@ function renderHeader() {
     if (nb) { nb.style.borderColor = 'var(--primary)'; nb.style.color = 'var(--primary)'; }
   }
 
-  // 移动端底部导航
   const mobileNav = document.getElementById('mobileNav');
   const mActive = {
     '': r === '' ? 'active' : '',
@@ -1724,6 +1826,7 @@ function renderMe() {
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
     if (!confirm('确定退出登录？')) return;
+    stopPolling();
     saveUser(null);
     location.hash = '#/';
     location.reload();
@@ -2106,7 +2209,6 @@ function renderPost(id) {
     });
   }
 
-  // 评论编辑 / 删除事件委托
   const commentList = document.getElementById('commentList');
   if (commentList) {
     commentList.addEventListener('click', async (e) => {
@@ -2211,377 +2313,4 @@ function selectLocalImage() {
       alert('图片上传失败：' + (err.message || '请重试'));
       try {
         const r = quillEditor.getSelection();
-        if (r) quillEditor.deleteText(r.index - 9, 9);
-      } catch (e) {}
-    }
-  };
-}
-
-function renderWrite(editId) {
-  if (!requireLogin('请先登录后再发布文章')) return;
-  const editing = editId ? posts.find(x => x.id === Number(editId)) : null;
-  if (editId && (!editing || String(editing.userId) !== String(currentUser.id))) {
-    app.innerHTML = `<div class="container"><p class="empty">文章不存在或没有权限</p></div>`;
-    return;
-  }
-
-  currentDraftEditingId = editing ? editing.id : null;
-  currentDraftKey = draftKey(currentDraftEditingId);
-
-  selectedTags = editing ? editing.tags.slice() : [];
-  coverData = null;
-
-  function tagChoicesHTML() {
-    return tags.map(t =>
-      `<span class="tag-choice ${selectedTags.includes(t.slug) ? 'active' : ''}" data-slug="${escapeHTML(t.slug)}">#${escapeHTML(t.name)}</span>`
-    ).join('');
-  }
-  function bindTagChoiceEvents() {
-    document.querySelectorAll('.tag-choice').forEach(el => {
-      el.addEventListener('click', () => {
-        const slug = el.dataset.slug;
-        if (selectedTags.includes(slug)) { selectedTags = selectedTags.filter(s => s !== slug); el.classList.remove('active'); }
-        else { selectedTags.push(slug); el.classList.add('active'); }
-        scheduleAutosave();
-      });
-    });
-  }
-
-  const myColls = collections.filter(c => String(c.userId) === String(currentUser.id));
-  const currentCollId = editing && editing.collectionId ? editing.collectionId : '';
-  const collOptions = myColls.map(c =>
-    `<option value="${c.id}" ${currentCollId === c.id ? 'selected' : ''}>📚 ${escapeHTML(c.name)}</option>`
-  ).join('');
-
-  app.innerHTML = `
-    <div class="container">
-      <a class="back" href="${editing ? '#/post/' + editing.id : '#/'}">← 返回</a>
-      <h1>${editing ? '编辑文章' : '写文章'}<span class="draft-status" id="draftStatus"></span></h1>
-      <p class="sub">${editing ? '修改后点保存' : '发布后会以「' + escapeHTML(displayName()) + '」的身份出现'}</p>
-
-      <div id="draftBannerWrap"></div>
-
-      <div class="form-group">
-        <label>标题</label>
-        <input type="text" id="title" placeholder="给你的文章起个标题" value="${editing ? escapeHTML(editing.title) : ''}" />
-      </div>
-
-      <div class="form-group">
-        <label>封面图（可选，会自动压缩）</label>
-        <div class="upload-box" id="uploadBox">
-          ${editing && editing.cover ? `<img src="${editing.cover}" alt="封面预览" />` : `<div class="hint">点击选择图片</div>`}
-        </div>
-        <input type="file" id="fileInput" accept="image/*" style="display:none" />
-      </div>
-
-      <div class="form-group">
-        <label>正文（支持富文本：标题、加粗、列表、引用、图片）</label>
-        <div id="editor"></div>
-      </div>
-
-      <div class="form-group">
-        <label>选择标签（可多选）</label>
-        <div class="tag-choices" id="tagChoices">${tagChoicesHTML()}</div>
-        <div class="new-tag-row">
-          <input type="text" id="newTagInput" placeholder="输入新标签名，例如：旅行" maxlength="20" />
-          <button type="button" class="mini-btn" id="addTagBtn">+ 添加</button>
-        </div>
-        <p class="form-hint">输入后点「添加」，新标签会立刻出现在上面并自动选中。</p>
-      </div>
-
-      <div class="form-group">
-        <label>加入合集（可选）</label>
-        <select id="collSelect">
-          <option value="">不加入合集</option>
-          ${collOptions}
-        </select>
-        ${myColls.length === 0
-          ? `<p style="font-size:13px;color:var(--text-3);margin-top:6px;">你还没有合集，<a href="#/collection/new" style="color:var(--primary);">点这里创建</a></p>` : ''}
-      </div>
-
-      <button class="submit-btn" id="submitBtn">${editing ? '保存修改' : '发布'}</button>
-      <button class="btn-secondary" id="clearDraftBtn">清空草稿</button>
-    </div>
-  `;
-
-  // ============ 初始化 Quill ============
-  quillEditor = new window.Quill('#editor', {
-    theme: 'snow',
-    placeholder: '写点什么吧…… 点工具栏的图片图标可以插入图片到正文',
-    modules: {
-      toolbar: {
-        container: [
-          [{ header: [1, 2, 3, false] }],
-          ['bold', 'italic', 'underline', 'strike'],
-          ['blockquote', 'code-block'],
-          [{ list: 'ordered' }, { list: 'bullet' }],
-          [{ color: [] }, { background: [] }],
-          ['link', 'image'],
-          ['clean'],
-        ],
-        handlers: { image: () => selectLocalImage() },
-      },
-    },
-  });
-
-  if (editing) {
-    if (looksLikeHTML(editing.content)) {
-      quillEditor.clipboard.dangerouslyPasteHTML(editing.content);
-    } else {
-      quillEditor.setText(editing.content || '');
-    }
-  }
-
-  bindTagChoiceEvents();
-
-  // 检查草稿
-  const draft = loadDraft(currentDraftEditingId);
-  const hasExistingDraft = !!draft;
-  // 判断草稿是否与原文/当前不同（如果只是刚进入还没动过，不提示）
-  if (hasExistingDraft) {
-    const bannerWrap = document.getElementById('draftBannerWrap');
-    const t = formatRelativeTime(draft.savedAt);
-    bannerWrap.innerHTML = `
-      <div class="draft-banner">
-        <div class="draft-msg">📝 检测到未发布的草稿（保存于 ${t}）</div>
-        <button class="restore-btn" id="restoreDraftBtn">恢复草稿</button>
-        <button class="discard-btn" id="discardDraftBtn">丢弃</button>
-      </div>
-    `;
-    document.getElementById('restoreDraftBtn').addEventListener('click', () => {
-      // 恢复
-      if (draft.title !== undefined) document.getElementById('title').value = draft.title;
-      if (draft.content !== undefined) {
-        quillEditor.root.innerHTML = draft.content;
-      }
-      if (draft.tags) {
-        selectedTags = draft.tags.slice();
-        const container = document.getElementById('tagChoices');
-        container.innerHTML = tagChoicesHTML();
-        bindTagChoiceEvents();
-      }
-      if (draft.cover) {
-        coverData = draft.cover;
-        document.getElementById('uploadBox').innerHTML = `<img src="${coverData}" alt="封面预览" />`;
-      }
-      if (draft.collectionId !== undefined) {
-        const sel = document.getElementById('collSelect');
-        sel.value = draft.collectionId ? String(draft.collectionId) : '';
-      }
-      bannerWrap.innerHTML = '';
-      showSync('草稿已恢复');
-    });
-    document.getElementById('discardDraftBtn').addEventListener('click', () => {
-      if (!confirm('丢弃草稿后就找不回了，确定？')) return;
-      clearDraft(currentDraftEditingId);
-      bannerWrap.innerHTML = '';
-      showSync('草稿已丢弃');
-    });
-  }
-
-  // ============ 自动保存草稿 ============
-  function doAutosave() {
-    if (!currentUser) return;
-    const titleVal = document.getElementById('title').value;
-    const contentHTML = quillEditor.root.innerHTML;
-    const collVal = document.getElementById('collSelect').value;
-    const draftData = {
-      title: titleVal,
-      content: contentHTML,
-      tags: selectedTags.slice(),
-      cover: coverData,
-      collectionId: collVal ? Number(collVal) : null,
-      savedAt: new Date().toISOString(),
-    };
-    // 如果全是空的就不存
-    const contentText = extractTextFromHTML(contentHTML);
-    if (!titleVal.trim() && !contentText) {
-      try { localStorage.removeItem(currentDraftKey); } catch (e) {}
-      return;
-    }
-    try {
-      localStorage.setItem(currentDraftKey, JSON.stringify(draftData));
-      const st = document.getElementById('draftStatus');
-      if (st) st.textContent = '· 已自动保存 ' + new Date().toLocaleTimeString().slice(0, 5);
-    } catch (e) {
-      console.warn('草稿保存失败（可能是空间满了）', e);
-    }
-  }
-
-  function scheduleAutosave() {
-    clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(doAutosave, 800);
-  }
-
-  quillEditor.on('text-change', scheduleAutosave);
-  document.getElementById('title').addEventListener('input', scheduleAutosave);
-  document.getElementById('collSelect').addEventListener('change', scheduleAutosave);
-
-  // 离开页面时立即保存一次
-  const beforeUnloadHandler = () => { doAutosave(); };
-  window.addEventListener('beforeunload', beforeUnloadHandler);
-
-  const newTagInput = document.getElementById('newTagInput');
-  const addTagBtn = document.getElementById('addTagBtn');
-  const doAddTag = async () => {
-    const raw = newTagInput.value.trim();
-    if (!raw) return;
-    addTagBtn.disabled = true; addTagBtn.textContent = '添加中…';
-    try {
-      const tag = await createTag(raw);
-      if (!selectedTags.includes(tag.slug)) selectedTags.push(tag.slug);
-      const container = document.getElementById('tagChoices');
-      container.innerHTML = tagChoicesHTML();
-      bindTagChoiceEvents();
-      newTagInput.value = '';
-      scheduleAutosave();
-    } catch (err) {
-      console.error(err);
-      alert('创建标签失败：' + (err.message || '请重试'));
-    } finally {
-      addTagBtn.disabled = false; addTagBtn.textContent = '+ 添加';
-    }
-  };
-  addTagBtn.addEventListener('click', doAddTag);
-  newTagInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); doAddTag(); }
-  });
-
-  const uploadBox = document.getElementById('uploadBox');
-  const fileInput = document.getElementById('fileInput');
-  uploadBox.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', async e => {
-    const file = e.target.files[0]; if (!file) return;
-    uploadBox.innerHTML = '<div class="hint">上传中…</div>';
-    try {
-      coverData = await uploadImage(file);
-      uploadBox.innerHTML = `<img src="${coverData}" alt="封面预览" />`;
-      scheduleAutosave();
-    } catch (err) {
-      console.error(err);
-      uploadBox.innerHTML = '<div class="hint">上传失败：' + escapeHTML(err.message || '请重试') + '</div>';
-      coverData = null;
-    }
-  });
-
-  // 清空草稿按钮
-  document.getElementById('clearDraftBtn').addEventListener('click', () => {
-    if (!confirm('清空当前编辑内容并删除草稿？')) return;
-    clearDraft(currentDraftEditingId);
-    location.hash = currentDraftEditingId ? ('#/post/' + currentDraftEditingId) : '#/';
-  });
-
-  document.getElementById('submitBtn').addEventListener('click', async () => {
-    const title = document.getElementById('title').value.trim();
-    const rawHTML = quillEditor.root.innerHTML;
-    const contentHTML = sanitizeHTML(rawHTML);
-    const contentText = extractTextFromHTML(contentHTML);
-    const collVal = document.getElementById('collSelect').value;
-    const collectionId = collVal ? Number(collVal) : null;
-
-    if (!title) return alert('请填写标题');
-    if (!contentText) return alert('请填写正文');
-    if (selectedTags.length === 0) return alert('请至少选择一个标签');
-
-    const excerpt = contentText.slice(0, 60) + (contentText.length > 60 ? '……' : '');
-
-    if (editing) {
-      editing.title = title;
-      editing.content = contentHTML;
-      editing.excerpt = excerpt;
-      editing.tags = selectedTags.slice();
-      editing.collectionId = collectionId;
-      if (coverData) editing.cover = coverData;
-      await syncPost(editing);
-      clearDraft(currentDraftEditingId);
-      window.removeEventListener('beforeunload', beforeUnloadHandler);
-      location.hash = '#/post/' + editing.id;
-    } else {
-      const newId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
-      const newPost = {
-        id: newId, title,
-        excerpt,
-        content: contentHTML,
-        author: displayName(),
-        tags: selectedTags.slice(),
-        cover: coverData || ('https://picsum.photos/seed/' + newId + '/600/400'),
-        date: new Date().toISOString().slice(0, 10),
-        likes: 0, comments: [],
-        collectionId,
-        userId: currentUser.id,
-      };
-      posts.push(newPost);
-      await syncPost(newPost);
-      clearDraft(null);
-      window.removeEventListener('beforeunload', beforeUnloadHandler);
-      location.hash = '#/post/' + newId;
-    }
-  });
-}
-
-/* ============ 路由 ============ */
-function router() {
-  if (!loaded) return;
-
-  // 离开写页面时清掉草稿 key 引用
-  const hash = location.hash || '#/';
-  const parts = hash.slice(2).split('/');
-  if (parts[0] !== 'write' && parts[0] !== 'edit') {
-    currentDraftKey = null;
-    currentDraftEditingId = null;
-    clearTimeout(autosaveTimer);
-  }
-
-  renderHeader();
-
-  if (parts[0] !== 'search') searchVisible = PAGE_SIZE;
-  if (parts[0] !== '') homeVisible = PAGE_SIZE;
-  if (parts[0] !== 'tag') tagVisible = PAGE_SIZE;
-  if (parts[0] !== 'collection') collectionVisible = PAGE_SIZE;
-  if (parts[0] !== 'me') { meVisible = PAGE_SIZE; meFavVisible = PAGE_SIZE; }
-  if (parts[0] !== 'notifications') notifVisible = 30;
-
-  if (parts[0] === 'login') renderLogin();
-  else if (parts[0] === 'register') renderRegister();
-  else if (parts[0] === 'notifications') renderNotifications();
-  else if (parts[0] === 'me') renderMe();
-  else if (parts[0] === 'write') renderWrite();
-  else if (parts[0] === 'edit' && parts[1]) renderWrite(parts[1]);
-  else if (parts[0] === 'search') renderSearch();
-  else if (parts[0] === 'tags') renderTags();
-  else if (parts[0] === 'tag' && parts[1]) renderTag(parts[1]);
-  else if (parts[0] === 'post' && parts[1]) renderPost(parts[1]);
-  else if (parts[0] === 'user' && parts[1]) renderUser(parts[1]);
-  else if (parts[0] === 'collections') renderCollections();
-  else if (parts[0] === 'collection' && parts[1] === 'new') renderCollectionEdit();
-  else if (parts[0] === 'collection' && parts[1] === 'edit' && parts[2]) renderCollectionEdit(parts[2]);
-  else if (parts[0] === 'collection' && parts[1]) renderCollection(parts[1]);
-  else renderHome();
-
-  window.scrollTo(0, 0);
-}
-
-app.innerHTML = `<div class="loading-screen"><div class="spinner"></div><div>正在加载…</div></div>`;
-
-async function init() {
-  try {
-    await loadAll();
-    router();
-  } catch (e) {
-    console.error(e);
-    app.innerHTML = `
-      <div class="container">
-        <div class="empty">
-          <p style="color:#e33;font-size:16px;margin-bottom:12px;">连接数据库失败</p>
-          <p style="font-size:13px;color:var(--text-3);">${escapeHTML(e.message || e)}</p>
-        </div>
-      </div>`;
-  }
-}
-
-window.addEventListener('hashchange', router);
-init();
-</script>
-
-</body>
-</html>
+        if (r) quillEditor.deleteText(r.index - 9
