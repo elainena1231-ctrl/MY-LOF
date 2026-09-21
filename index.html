@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>我的创作社区</title>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <style>
   :root {
     --bg: #fafafa; --card: #ffffff; --border: #eeeeee;
@@ -159,7 +162,23 @@
   .upload-box img { max-width: 100%; max-height: 260px; border-radius: 8px; }
   .upload-box .hint { color: var(--text-3); font-size: 14px; }
   .post-cover { width: 100%; border-radius: 12px; margin-bottom: 20px; }
-  .post-content { font-size: 16px; color: var(--text-2); }
+  .post-content { font-size: 16px; color: var(--text-2); line-height: 1.75; }
+  .post-content h1, .post-content h2, .post-content h3 { margin: 20px 0 10px; color: var(--text); }
+  .post-content h1 { font-size: 24px; }
+  .post-content h2 { font-size: 20px; }
+  .post-content h3 { font-size: 17px; }
+  .post-content blockquote {
+    border-left: 3px solid var(--primary); padding-left: 16px;
+    color: var(--text-2); margin: 14px 0; font-style: italic;
+  }
+  .post-content pre {
+    background: var(--hover-bg); padding: 14px 18px; border-radius: 8px;
+    overflow-x: auto; margin: 14px 0; font-size: 14px; font-family: monospace;
+  }
+  .post-content ul, .post-content ol { padding-left: 26px; margin: 14px 0; }
+  .post-content li { margin-bottom: 6px; }
+  .post-content a { color: var(--primary); }
+  .post-content img { max-width: 100%; border-radius: 12px; margin: 14px 0; display: block; }
   .author-link { color: var(--primary); text-decoration: none; }
   .author-link:hover { text-decoration: underline; }
   .action-bar { display: flex; gap: 12px; margin: 28px 0; flex-wrap: wrap; }
@@ -379,7 +398,6 @@
   }
   .load-more-btn:hover { border-color: var(--primary); color: var(--primary); }
   .load-more-hint { text-align: center; color: var(--text-3); font-size: 12px; margin-top: 8px; }
-  /* 通知 */
   .notif-list { display: flex; flex-direction: column; gap: 8px; }
   .notif-item {
     display: flex; gap: 12px; align-items: flex-start;
@@ -403,6 +421,34 @@
     background: var(--primary); border-radius: 50%;
     margin-left: 6px; vertical-align: middle;
   }
+  /* Quill 编辑器 */
+  .ql-toolbar.ql-snow {
+    border-radius: 12px 12px 0 0;
+    border-color: var(--border);
+    background: var(--card);
+  }
+  .ql-container.ql-snow {
+    border-radius: 0 0 12px 12px;
+    border-color: var(--border);
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--card);
+    color: var(--text);
+  }
+  .ql-editor { min-height: 320px; font-family: inherit; font-size: 15px; line-height: 1.75; color: var(--text); }
+  .ql-editor img { max-width: 100%; border-radius: 8px; }
+  .ql-editor.ql-blank::before { color: var(--text-3); font-style: normal; }
+  .ql-snow .ql-stroke { stroke: var(--text-2); }
+  .ql-snow .ql-fill { fill: var(--text-2); }
+  .ql-snow .ql-picker { color: var(--text-2); }
+  .ql-snow .ql-picker-options { background: var(--card); border-color: var(--border); }
+  .ql-snow .ql-picker.ql-expanded .ql-picker-options { background: var(--card); border-color: var(--border); }
+  body.dark .ql-snow .ql-stroke { stroke: var(--text-2); }
+  body.dark .ql-snow .ql-fill { fill: var(--text-2); }
+  body.dark .ql-snow .ql-picker { color: var(--text-2); }
+  body.dark .ql-editor.ql-blank::before { color: var(--text-3); }
+  body.dark .ql-snow .ql-tooltip { background: var(--card); border-color: var(--border); color: var(--text); }
+  body.dark .ql-snow .ql-tooltip input[type=text] { background: var(--hover-bg); border-color: var(--border); color: var(--text); }
   @media (max-width: 640px) {
     .header .container { gap: 8px; }
     .main-nav a { padding: 6px 10px; font-size: 13px; }
@@ -435,6 +481,34 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 let tags = [];
 let allUsers = [];
 let usersByName = {};
+
+// ==================== 富文本工具 ====================
+function looksLikeHTML(s) {
+  return /<[a-z][\s\S]*>/i.test(s || '');
+}
+function sanitizeHTML(html) {
+  if (!html) return '';
+  if (window.DOMPurify) {
+    return window.DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ['p','br','strong','em','u','s','blockquote','pre','code',
+                     'h1','h2','h3','h4','ul','ol','li','a','img','span','sub','sup','hr'],
+      ALLOWED_ATTR: ['href','src','alt','class','style','target','rel'],
+      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    });
+  }
+  return html;
+}
+function extractTextFromHTML(html) {
+  if (!html) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  // 把 <br> 和块级标签换成换行符
+  tmp.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
+  tmp.querySelectorAll('p, div, h1, h2, h3, h4, li, blockquote').forEach(el => {
+    el.appendChild(document.createTextNode('\n'));
+  });
+  return (tmp.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+}
 
 // ==================== 分页 ====================
 const PAGE_SIZE = 10;
@@ -495,7 +569,6 @@ async function loginUser(loginName, password) {
   return data;
 }
 
-// ==================== 数据 ====================
 let posts = [];
 let collections = [];
 let loaded = false;
@@ -546,14 +619,9 @@ function rowToTag(r) { return { id: r.id, slug: r.slug, name: r.name, desc: r.de
 function rowToUser(r) { return { id: r.id, loginName: r.login_name, displayName: r.display_name, avatar: r.avatar || null }; }
 function rowToNotif(r) {
   return {
-    id: r.id,
-    actorName: r.actor_name,
-    type: r.type,
-    postId: r.post_id,
-    postTitle: r.post_title,
-    content: r.content,
-    isRead: r.is_read || false,
-    createdAt: r.created_at,
+    id: r.id, actorName: r.actor_name, type: r.type,
+    postId: r.post_id, postTitle: r.post_title,
+    content: r.content, isRead: r.is_read || false, createdAt: r.created_at,
   };
 }
 
@@ -596,10 +664,8 @@ async function loadAll() {
     const uid = String(currentUser.id);
     const { data: fData } = await supabase.from('favorites').select('post_id').eq('user_id', uid);
     myFavorites = new Set((fData || []).map(r => r.post_id));
-
     const { data: aData } = await supabase.from('author_follows').select('followee_name').eq('follower_id', uid);
     followedAuthors = new Set((aData || []).map(r => r.followee_name));
-
     const { data: nData } = await supabase.from('notifications')
       .select('*').eq('user_id', uid)
       .order('created_at', { ascending: false })
@@ -616,7 +682,6 @@ async function loadAll() {
   loaded = true;
 }
 
-// ==================== 通知 ====================
 async function createNotification({ userId, type, postId, postTitle, content }) {
   if (!currentUser) return;
   if (!userId) return;
@@ -706,10 +771,7 @@ async function toggleFavorite(postId) {
     showSync('已收藏');
     const p = posts.find(x => x.id === postId);
     if (p && p.userId) {
-      await createNotification({
-        userId: p.userId, type: 'favorite',
-        postId: p.id, postTitle: p.title,
-      });
+      await createNotification({ userId: p.userId, type: 'favorite', postId: p.id, postTitle: p.title });
     }
   }
 }
@@ -726,9 +788,7 @@ async function toggleFollowAuthor(name) {
     await supabase.from('author_follows').insert({ follower_id: uid, followee_name: name });
     showSync('已关注');
     const targetId = findUserIdByName(name);
-    if (targetId) {
-      await createNotification({ userId: targetId, type: 'follow' });
-    }
+    if (targetId) await createNotification({ userId: targetId, type: 'follow' });
   }
 }
 
@@ -835,12 +895,13 @@ function collectionCoverOf(c) { return c.cover || ('https://picsum.photos/seed/c
 function postCardHTML(p) {
   const coll = p.collectionId ? collections.find(c => c.id === p.collectionId) : null;
   const faved = myFavorites.has(p.id);
+  const excerptText = p.excerpt || (looksLikeHTML(p.content) ? extractTextFromHTML(p.content).slice(0, 60) : (p.content || '').slice(0, 60));
   return `
     <a class="post" href="#/post/${p.id}">
       <img src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
       <div>
         <h3>${escapeHTML(p.title)}</h3>
-        <p>${escapeHTML(p.excerpt)}</p>
+        <p>${escapeHTML(excerptText)}</p>
         <span class="meta">
           <span class="author-inline">${avatarHTML(p.author, 18, 'avatar-sm')}${escapeHTML(p.author)}</span>
           · ${p.date} · ♡ ${p.likes} · 💬 ${p.comments.length}
@@ -1158,16 +1219,17 @@ function updateSearchResults() {
     return;
   }
 
-  const matchedPosts = posts.filter(p =>
-    p.title.toLowerCase().includes(kw) ||
-    (p.content || '').toLowerCase().includes(kw) ||
-    (p.excerpt || '').toLowerCase().includes(kw) ||
-    p.author.toLowerCase().includes(kw) ||
-    p.tags.some(s => {
-      const t = tags.find(x => x.slug === s);
-      return t && t.name.toLowerCase().includes(kw);
-    })
-  ).sort((a, b) => b.id - a.id);
+  const matchedPosts = posts.filter(p => {
+    const contentText = looksLikeHTML(p.content) ? extractTextFromHTML(p.content) : (p.content || '');
+    return p.title.toLowerCase().includes(kw) ||
+      contentText.toLowerCase().includes(kw) ||
+      (p.excerpt || '').toLowerCase().includes(kw) ||
+      p.author.toLowerCase().includes(kw) ||
+      p.tags.some(s => {
+        const t = tags.find(x => x.slug === s);
+        return t && t.name.toLowerCase().includes(kw);
+      });
+  }).sort((a, b) => b.id - a.id);
 
   const matchedTags = tags.filter(t =>
     t.name.toLowerCase().includes(kw) || (t.desc || '').toLowerCase().includes(kw)
@@ -1266,15 +1328,16 @@ function renderHome() {
 
   const kw = homeKeyword.trim().toLowerCase();
   if (kw) {
-    list = list.filter(p =>
-      p.title.toLowerCase().includes(kw) ||
-      (p.content || '').toLowerCase().includes(kw) ||
-      p.author.toLowerCase().includes(kw) ||
-      p.tags.some(s => {
-        const t = tags.find(x => x.slug === s);
-        return t && (t.name.toLowerCase().includes(kw) || s.toLowerCase().includes(kw));
-      })
-    );
+    list = list.filter(p => {
+      const contentText = looksLikeHTML(p.content) ? extractTextFromHTML(p.content) : (p.content || '');
+      return p.title.toLowerCase().includes(kw) ||
+        contentText.toLowerCase().includes(kw) ||
+        p.author.toLowerCase().includes(kw) ||
+        p.tags.some(s => {
+          const t = tags.find(x => x.slug === s);
+          return t && (t.name.toLowerCase().includes(kw) || s.toLowerCase().includes(kw));
+        });
+    });
   }
   if (homeSort === 'hot') list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   else list.sort((a, b) => b.id - a.id);
@@ -1804,6 +1867,11 @@ function renderPost(id) {
 
   const authorAvatar = avatarHTML(p.author, 40);
 
+  // 内容展示：HTML 用 innerHTML（先 sanitize），纯文本用 escapeHTML
+  const contentDisplay = looksLikeHTML(p.content)
+    ? sanitizeHTML(p.content)
+    : escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>');
+
   app.innerHTML = `
     <div class="container">
       <a class="back" href="#/">← 返回首页</a>
@@ -1816,7 +1884,7 @@ function renderPost(id) {
         </div>
       </div>
       <img class="post-cover" src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
-      <div class="post-content">${escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>')}</div>
+      <div class="post-content">${contentDisplay}</div>
       <div class="tags" style="margin-top:24px;">${tagHTML}</div>
       ${collHTML}
 
@@ -1845,10 +1913,7 @@ function renderPost(id) {
       myLikes.push(p.id);
       p.likes += 1;
       if (p.userId && currentUser) {
-        await createNotification({
-          userId: p.userId, type: 'like',
-          postId: p.id, postTitle: p.title,
-        });
+        await createNotification({ userId: p.userId, type: 'like', postId: p.id, postTitle: p.title });
       }
     }
     saveLikes(); renderPost(p.id); await syncPost(p);
@@ -1897,9 +1962,43 @@ function renderPost(id) {
   }
 }
 
-/* ============ 写 / 编辑文章 ============ */
+/* ============ 写 / 编辑文章（Quill） ============ */
 let selectedTags = [];
 let coverData = null;
+let quillEditor = null;
+
+function selectLocalImage() {
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
+  input.click();
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      // 在光标处显示"上传中"提示
+      const range = quillEditor.getSelection(true);
+      quillEditor.insertText(range.index, '（图片上传中…）');
+      quillEditor.setSelection(range.index + 9);
+
+      const url = await uploadImage(file);
+
+      // 删除提示文字
+      quillEditor.deleteText(range.index, 9);
+      // 插入图片
+      quillEditor.insertEmbed(range.index, 'image', url);
+      quillEditor.setSelection(range.index + 1);
+    } catch (err) {
+      console.error(err);
+      alert('图片上传失败：' + (err.message || '请重试'));
+      // 尝试清理提示文字
+      try {
+        const r = quillEditor.getSelection();
+        if (r) quillEditor.deleteText(r.index - 9, 9);
+      } catch (e) {}
+    }
+  };
+}
 
 function renderWrite(editId) {
   if (!requireLogin('请先登录后再发布文章')) return;
@@ -1953,8 +2052,8 @@ function renderWrite(editId) {
       </div>
 
       <div class="form-group">
-        <label>正文</label>
-        <textarea id="content" placeholder="写点什么吧……">${editing ? escapeHTML(editing.content || '') : ''}</textarea>
+        <label>正文（支持富文本：标题、加粗、列表、引用、图片）</label>
+        <div id="editor"></div>
       </div>
 
       <div class="form-group">
@@ -1980,6 +2079,37 @@ function renderWrite(editId) {
       <button class="submit-btn" id="submitBtn">${editing ? '保存修改' : '发布'}</button>
     </div>
   `;
+
+  // ============ 初始化 Quill ============
+  quillEditor = new window.Quill('#editor', {
+    theme: 'snow',
+    placeholder: '写点什么吧…… 点工具栏的图片图标可以插入图片到正文',
+    modules: {
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          ['blockquote', 'code-block'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ color: [] }, { background: [] }],
+          ['link', 'image'],
+          ['clean'],
+        ],
+        handlers: {
+          image: () => selectLocalImage(),
+        },
+      },
+    },
+  });
+
+  // 加载已有内容
+  if (editing) {
+    if (looksLikeHTML(editing.content)) {
+      quillEditor.clipboard.dangerouslyPasteHTML(editing.content);
+    } else {
+      quillEditor.setText(editing.content || '');
+    }
+  }
 
   bindTagChoiceEvents();
 
@@ -2026,18 +2156,22 @@ function renderWrite(editId) {
 
   document.getElementById('submitBtn').addEventListener('click', async () => {
     const title = document.getElementById('title').value.trim();
-    const content = document.getElementById('content').value.trim();
+    const rawHTML = quillEditor.root.innerHTML;
+    const contentHTML = sanitizeHTML(rawHTML);
+    const contentText = extractTextFromHTML(contentHTML);
     const collVal = document.getElementById('collSelect').value;
     const collectionId = collVal ? Number(collVal) : null;
 
     if (!title) return alert('请填写标题');
-    if (!content) return alert('请填写正文');
+    if (!contentText) return alert('请填写正文');
     if (selectedTags.length === 0) return alert('请至少选择一个标签');
+
+    const excerpt = contentText.slice(0, 60) + (contentText.length > 60 ? '……' : '');
 
     if (editing) {
       editing.title = title;
-      editing.content = content;
-      editing.excerpt = content.slice(0, 60) + (content.length > 60 ? '……' : '');
+      editing.content = contentHTML;
+      editing.excerpt = excerpt;
       editing.tags = selectedTags.slice();
       editing.collectionId = collectionId;
       if (coverData) editing.cover = coverData;
@@ -2047,8 +2181,8 @@ function renderWrite(editId) {
       const newId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
       const newPost = {
         id: newId, title,
-        excerpt: content.slice(0, 60) + (content.length > 60 ? '……' : ''),
-        content,
+        excerpt,
+        content: contentHTML,
         author: displayName(),
         tags: selectedTags.slice(),
         cover: coverData || ('https://picsum.photos/seed/' + newId + '/600/400'),
