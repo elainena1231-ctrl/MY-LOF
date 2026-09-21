@@ -43,10 +43,17 @@
     width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
     font-size: 15px; line-height: 1; color: var(--text);
     display: flex; align-items: center; justify-content: center;
-    transition: border-color .2s;
+    transition: border-color .2s; position: relative;
   }
   .icon-btn:hover { border-color: var(--primary); }
   a.icon-btn { text-decoration: none; }
+  .notif-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #e33; color: #fff; font-size: 10px;
+    padding: 0 5px; border-radius: 999px; min-width: 16px;
+    height: 16px; line-height: 16px; text-align: center;
+    font-weight: bold;
+  }
   .write-btn {
     padding: 8px 16px; background: var(--primary); color: #fff;
     border-radius: 999px; text-decoration: none; font-size: 13px;
@@ -68,9 +75,7 @@
     font-size: 13px; font-weight: bold;
     object-fit: cover; overflow: hidden; flex-shrink: 0;
   }
-  .avatar-sm {
-    width: 20px; height: 20px; font-size: 10px;
-  }
+  .avatar-sm { width: 20px; height: 20px; font-size: 10px; }
   h1 { font-size: 26px; margin-bottom: 6px; }
   h2 { font-size: 18px; margin: 24px 0 12px; }
   .sub { color: var(--text-3); margin-bottom: 24px; }
@@ -298,10 +303,6 @@
     background: rgba(227,51,51,.1); color: #e33; padding: 10px 14px;
     border-radius: 8px; font-size: 14px; margin-bottom: 16px;
   }
-  .auth-success {
-    background: rgba(80,200,120,.15); color: #2a9d5c;
-    padding: 12px; border-radius: 8px; font-size: 14px;
-  }
   .tag-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
   .tag-card {
     display: block; background: var(--card); border: 1px solid var(--border);
@@ -378,6 +379,30 @@
   }
   .load-more-btn:hover { border-color: var(--primary); color: var(--primary); }
   .load-more-hint { text-align: center; color: var(--text-3); font-size: 12px; margin-top: 8px; }
+  /* 通知 */
+  .notif-list { display: flex; flex-direction: column; gap: 8px; }
+  .notif-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    text-decoration: none; color: inherit; transition: all .2s;
+  }
+  .notif-item:hover { border-color: var(--primary); }
+  .notif-item.unread { background: rgba(255,92,92,.06); border-color: rgba(255,92,92,.25); }
+  .notif-body { flex: 1; min-width: 0; }
+  .notif-text { font-size: 14px; color: var(--text); margin-bottom: 4px; line-height: 1.5; }
+  .notif-text strong { color: var(--primary); font-weight: 600; }
+  .notif-content {
+    font-size: 13px; color: var(--text-2); background: var(--hover-bg);
+    padding: 6px 12px; border-radius: 8px; margin-bottom: 4px;
+    border-left: 3px solid var(--primary);
+  }
+  .notif-time { font-size: 12px; color: var(--text-3); }
+  .notif-dot {
+    display: inline-block; width: 8px; height: 8px;
+    background: var(--primary); border-radius: 50%;
+    margin-left: 6px; vertical-align: middle;
+  }
   @media (max-width: 640px) {
     .header .container { gap: 8px; }
     .main-nav a { padding: 6px 10px; font-size: 13px; }
@@ -408,8 +433,8 @@ const SUPABASE_KEY = 'sb_publishable_-uNERFSmoVIUo1j4DO6cPw_9zpCGKwZ';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let tags = [];
-let allUsers = [];   // { id, login_name, display_name, avatar }
-let usersByName = {};   // display_name -> user
+let allUsers = [];
+let usersByName = {};
 
 // ==================== 分页 ====================
 const PAGE_SIZE = 10;
@@ -419,6 +444,7 @@ let collectionVisible = PAGE_SIZE;
 let meVisible = PAGE_SIZE;
 let meFavVisible = PAGE_SIZE;
 let searchVisible = PAGE_SIZE;
+let notifVisible = 30;
 
 function loadMoreHTML(shown, total, extraHint) {
   if (shown >= total) {
@@ -443,7 +469,6 @@ function saveUser(u) {
 }
 function displayName() { return currentUser ? currentUser.displayName : '游客'; }
 
-// ==================== 密码 hash ====================
 async function hashPassword(password) {
   const data = new TextEncoder().encode(password + 'my-lof-salt-v1');
   const buf = await crypto.subtle.digest('SHA-256', data);
@@ -476,9 +501,10 @@ let collections = [];
 let loaded = false;
 let followedTags = JSON.parse(localStorage.getItem('my_followed_tags') || '[]');
 let myLikes = JSON.parse(localStorage.getItem('my_likes') || '[]');
-// 收藏和关注作者存数据库，因为要按用户区分
-let myFavorites = new Set();    // Set of post ids
-let followedAuthors = new Set(); // Set of author display names
+let myFavorites = new Set();
+let followedAuthors = new Set();
+let myNotifications = [];
+let myUnreadCount = 0;
 
 function saveFollows() { localStorage.setItem('my_followed_tags', JSON.stringify(followedTags)); }
 function saveLikes() { localStorage.setItem('my_likes', JSON.stringify(myLikes)); }
@@ -518,6 +544,18 @@ function collToRow(c) {
 }
 function rowToTag(r) { return { id: r.id, slug: r.slug, name: r.name, desc: r.description || '' }; }
 function rowToUser(r) { return { id: r.id, loginName: r.login_name, displayName: r.display_name, avatar: r.avatar || null }; }
+function rowToNotif(r) {
+  return {
+    id: r.id,
+    actorName: r.actor_name,
+    type: r.type,
+    postId: r.post_id,
+    postTitle: r.post_title,
+    content: r.content,
+    isRead: r.is_read || false,
+    createdAt: r.created_at,
+  };
+}
 
 function rebuildUsersByName() {
   usersByName = {};
@@ -531,11 +569,8 @@ async function loadAll() {
   if (cErr) throw cErr;
   const { data: tData, error: tErr } = await supabase.from('tags').select('*').order('id', { ascending: true });
   if (tErr) throw tErr;
-
-  // 不读 password_hash
   const { data: uData, error: uErr } = await supabase
-    .from('app_users')
-    .select('id, login_name, display_name, avatar');
+    .from('app_users').select('id, login_name, display_name, avatar');
   if (uErr) throw uErr;
 
   posts = (pData || []).map(rowToPost);
@@ -544,7 +579,6 @@ async function loadAll() {
   allUsers = (uData || []).map(rowToUser);
   rebuildUsersByName();
 
-  // 更新 currentUser 里的 avatar（如果数据库有新值）
   if (currentUser) {
     const me = allUsers.find(u => String(u.id) === String(currentUser.id));
     if (me) {
@@ -558,19 +592,62 @@ async function loadAll() {
     if (p.collectionId && !collections.find(c => c.id === p.collectionId)) p.collectionId = null;
   });
 
-  // 加载收藏和关注作者
   if (currentUser) {
-    const { data: fData } = await supabase.from('favorites').select('post_id').eq('user_id', String(currentUser.id));
+    const uid = String(currentUser.id);
+    const { data: fData } = await supabase.from('favorites').select('post_id').eq('user_id', uid);
     myFavorites = new Set((fData || []).map(r => r.post_id));
 
-    const { data: aData } = await supabase.from('author_follows').select('followee_name').eq('follower_id', String(currentUser.id));
+    const { data: aData } = await supabase.from('author_follows').select('followee_name').eq('follower_id', uid);
     followedAuthors = new Set((aData || []).map(r => r.followee_name));
+
+    const { data: nData } = await supabase.from('notifications')
+      .select('*').eq('user_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    myNotifications = (nData || []).map(rowToNotif);
+    myUnreadCount = myNotifications.filter(n => !n.isRead).length;
   } else {
     myFavorites = new Set();
     followedAuthors = new Set();
+    myNotifications = [];
+    myUnreadCount = 0;
   }
 
   loaded = true;
+}
+
+// ==================== 通知 ====================
+async function createNotification({ userId, type, postId, postTitle, content }) {
+  if (!currentUser) return;
+  if (!userId) return;
+  if (String(userId) === String(currentUser.id)) return;
+  const { error } = await supabase.from('notifications').insert({
+    user_id: String(userId),
+    actor_name: displayName(),
+    type,
+    post_id: postId || null,
+    post_title: postTitle || null,
+    content: content || null,
+  });
+  if (error) console.error('通知创建失败：', error);
+}
+
+function findUserIdByName(name) {
+  const u = usersByName[name];
+  return u ? u.id : null;
+}
+
+function formatRelativeTime(isoStr) {
+  if (!isoStr) return '';
+  const t = new Date(isoStr).getTime();
+  const now = Date.now();
+  const diff = Math.floor((now - t) / 1000);
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+  if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+  if (diff < 86400 * 7) return Math.floor(diff / 86400) + ' 天前';
+  const d = new Date(isoStr);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 async function createTag(name) {
@@ -616,7 +693,6 @@ async function removeColl(c) {
   showSync('已删除'); return true;
 }
 
-// 收藏
 async function toggleFavorite(postId) {
   if (!currentUser) return;
   const uid = String(currentUser.id);
@@ -628,10 +704,16 @@ async function toggleFavorite(postId) {
     myFavorites.add(postId);
     await supabase.from('favorites').insert({ user_id: uid, post_id: postId });
     showSync('已收藏');
+    const p = posts.find(x => x.id === postId);
+    if (p && p.userId) {
+      await createNotification({
+        userId: p.userId, type: 'favorite',
+        postId: p.id, postTitle: p.title,
+      });
+    }
   }
 }
 
-// 关注作者
 async function toggleFollowAuthor(name) {
   if (!currentUser) return;
   const uid = String(currentUser.id);
@@ -643,6 +725,10 @@ async function toggleFollowAuthor(name) {
     followedAuthors.add(name);
     await supabase.from('author_follows').insert({ follower_id: uid, followee_name: name });
     showSync('已关注');
+    const targetId = findUserIdByName(name);
+    if (targetId) {
+      await createNotification({ userId: targetId, type: 'follow' });
+    }
   }
 }
 
@@ -654,7 +740,6 @@ function currentRoute() {
   return hash.slice(2).split('/')[0] || '';
 }
 
-// ==================== 头像工具 ====================
 function avatarURL(name) {
   const u = usersByName[name];
   return u && u.avatar ? u.avatar : null;
@@ -678,7 +763,6 @@ function currentUserAvatarHTML(size) {
   return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.45)}px;">${escapeHTML(displayName()[0])}</div>`;
 }
 
-// ==================== header ====================
 function renderHeader() {
   const nav = document.getElementById('mainNav');
   const r = currentRoute();
@@ -697,6 +781,9 @@ function renderHeader() {
 
   const right = document.getElementById('navRight');
   const searchBtn = `<a href="#/search" class="icon-btn" id="searchNavBtn" title="搜索">🔍</a>`;
+  const notifBtn = currentUser
+    ? `<a href="#/notifications" class="icon-btn" id="notifNavBtn" title="通知">🔔${myUnreadCount > 0 ? `<span class="notif-badge">${myUnreadCount > 99 ? '99+' : myUnreadCount}</span>` : ''}</a>`
+    : '';
   const themeBtn = `<button class="icon-btn" id="themeBtn" title="切换深色模式">🌙</button>`;
   const writeBtn = `<a href="#/write" class="write-btn">✏️ 写文章</a>`;
   const userArea = currentUser
@@ -706,7 +793,7 @@ function renderHeader() {
        </a>`
     : `<a href="#/login" class="mini-btn">登录</a>`;
 
-  right.innerHTML = searchBtn + themeBtn + writeBtn + userArea;
+  right.innerHTML = searchBtn + notifBtn + themeBtn + writeBtn + userArea;
 
   document.getElementById('themeBtn').addEventListener('click', () => {
     document.body.classList.toggle('dark');
@@ -718,6 +805,10 @@ function renderHeader() {
   if (r === 'search') {
     const sb = document.getElementById('searchNavBtn');
     if (sb) { sb.style.borderColor = 'var(--primary)'; sb.style.color = 'var(--primary)'; }
+  }
+  if (r === 'notifications') {
+    const nb = document.getElementById('notifNavBtn');
+    if (nb) { nb.style.borderColor = 'var(--primary)'; nb.style.color = 'var(--primary)'; }
   }
 }
 
@@ -830,14 +921,11 @@ async function uploadImage(file) {
   const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(data.path);
   return publicUrl;
 }
-async function uploadAvatar(file) {
-  return await uploadImage(file);
-}
+async function uploadAvatar(file) { return await uploadImage(file); }
 
 async function saveAvatar(url) {
   const { error } = await supabase.from('app_users').update({ avatar: url }).eq('id', currentUser.id);
   if (error) throw error;
-  // 更新本地
   currentUser.avatar = url;
   saveUser(currentUser);
   const me = allUsers.find(u => String(u.id) === String(currentUser.id));
@@ -936,6 +1024,94 @@ function renderRegister() {
     }
   };
   document.getElementById('registerBtn').addEventListener('click', submit);
+}
+
+/* ============ 通知页面 ============ */
+function renderNotifications() {
+  if (!requireLogin('请先登录')) return;
+
+  if (myNotifications.length === 0) {
+    app.innerHTML = `
+      <div class="container">
+        <h1>通知</h1>
+        <p class="sub">别人给你点赞、评论、收藏、关注时，会出现在这里</p>
+        <p class="empty">还没有任何通知</p>
+      </div>
+    `;
+    return;
+  }
+
+  const shown = myNotifications.slice(0, notifVisible);
+  const listHTML = shown.map(n => {
+    const time = formatRelativeTime(n.createdAt);
+    const actorAvatar = avatarHTML(n.actorName, 36);
+    let actionText = '';
+    let link = '#/';
+    if (n.type === 'like') {
+      actionText = `点赞了你的文章《${escapeHTML(n.postTitle || '')}》`;
+      link = n.postId ? '#/post/' + n.postId : '#/';
+    } else if (n.type === 'comment') {
+      actionText = `评论了你的文章《${escapeHTML(n.postTitle || '')}》`;
+      link = n.postId ? '#/post/' + n.postId : '#/';
+    } else if (n.type === 'favorite') {
+      actionText = `收藏了你的文章《${escapeHTML(n.postTitle || '')}》`;
+      link = n.postId ? '#/post/' + n.postId : '#/';
+    } else if (n.type === 'follow') {
+      actionText = `关注了你`;
+      link = '#/user/' + encodeURIComponent(n.actorName);
+    }
+    const unreadClass = n.isRead ? '' : 'unread';
+    const dot = n.isRead ? '' : '<span class="notif-dot"></span>';
+    return `
+      <a class="notif-item ${unreadClass}" href="${link}" data-notif-id="${n.id}">
+        ${actorAvatar}
+        <div class="notif-body">
+          <div class="notif-text"><strong>${escapeHTML(n.actorName)}</strong> ${actionText}${dot}</div>
+          ${n.content ? `<div class="notif-content">"${escapeHTML(n.content)}"</div>` : ''}
+          <div class="notif-time">${time}</div>
+        </div>
+      </a>
+    `;
+  }).join('');
+
+  const moreHTML = loadMoreHTML(notifVisible, myNotifications.length, true);
+
+  app.innerHTML = `
+    <div class="container">
+      <div class="section-head">
+        <h1 style="margin:0;">通知</h1>
+        ${myUnreadCount > 0 ? `<button class="mini-btn" id="markAllReadBtn">全部标为已读</button>` : ''}
+      </div>
+      <p class="sub">${myUnreadCount > 0 ? myUnreadCount + ' 条未读' : '全部已读'}</p>
+      <div class="notif-list">${listHTML}</div>
+      ${moreHTML}
+    </div>
+  `;
+
+  document.querySelectorAll('.notif-item').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = Number(el.dataset.notifId);
+      const n = myNotifications.find(x => x.id === id);
+      if (n && !n.isRead) {
+        n.isRead = true;
+        myUnreadCount = myNotifications.filter(x => !x.isRead).length;
+        try { await supabase.from('notifications').update({ is_read: true }).eq('id', id); } catch (e) {}
+      }
+    });
+  });
+
+  const markBtn = document.getElementById('markAllReadBtn');
+  if (markBtn) markBtn.addEventListener('click', async () => {
+    const ids = myNotifications.filter(n => !n.isRead).map(n => n.id);
+    if (ids.length === 0) return;
+    myNotifications.forEach(n => n.isRead = true);
+    myUnreadCount = 0;
+    try { await supabase.from('notifications').update({ is_read: true }).in('id', ids); } catch (e) {}
+    renderHeader();
+    renderNotifications();
+  });
+
+  bindLoadMore(() => { notifVisible += 30; renderNotifications(); });
 }
 
 /* ============ 搜索页 ============ */
@@ -1078,7 +1254,7 @@ function bindSearchTabs() {
 /* ============ 首页 ============ */
 let homeSort = 'new';
 let homeKeyword = '';
-let homeTab = 'all'; // all | following-tags | following-authors
+let homeTab = 'all';
 
 function renderHome() {
   let list = posts.slice();
@@ -1307,7 +1483,6 @@ function renderMe() {
     </div>
   `;
 
-  // 头像上传
   const wrap = document.getElementById('avatarWrap');
   const input = document.getElementById('avatarInput');
   wrap.addEventListener('click', () => input.click());
@@ -1662,8 +1837,20 @@ function renderPost(id) {
   `;
 
   document.getElementById('likeBtn').addEventListener('click', async () => {
-    if (myLikes.includes(p.id)) { myLikes = myLikes.filter(x => x !== p.id); p.likes = Math.max(0, p.likes - 1); }
-    else { myLikes.push(p.id); p.likes += 1; }
+    const wasLiked = myLikes.includes(p.id);
+    if (wasLiked) {
+      myLikes = myLikes.filter(x => x !== p.id);
+      p.likes = Math.max(0, p.likes - 1);
+    } else {
+      myLikes.push(p.id);
+      p.likes += 1;
+      if (p.userId && currentUser) {
+        await createNotification({
+          userId: p.userId, type: 'like',
+          postId: p.id, postTitle: p.title,
+        });
+      }
+    }
     saveLikes(); renderPost(p.id); await syncPost(p);
   });
 
@@ -1696,6 +1883,13 @@ function renderPost(id) {
       const content = input.value.trim();
       if (!content) return;
       p.comments.push({ id: Date.now(), author: displayName(), content, date: new Date().toISOString().slice(0, 10) });
+      if (p.userId && currentUser) {
+        await createNotification({
+          userId: p.userId, type: 'comment',
+          postId: p.id, postTitle: p.title,
+          content: content.slice(0, 60),
+        });
+      }
       renderPost(p.id); await syncPost(p);
     };
     cBtn.addEventListener('click', doComment);
@@ -1883,9 +2077,11 @@ function router() {
   if (parts[0] !== 'tag') tagVisible = PAGE_SIZE;
   if (parts[0] !== 'collection') collectionVisible = PAGE_SIZE;
   if (parts[0] !== 'me') { meVisible = PAGE_SIZE; meFavVisible = PAGE_SIZE; }
+  if (parts[0] !== 'notifications') notifVisible = 30;
 
   if (parts[0] === 'login') renderLogin();
   else if (parts[0] === 'register') renderRegister();
+  else if (parts[0] === 'notifications') renderNotifications();
   else if (parts[0] === 'me') renderMe();
   else if (parts[0] === 'write') renderWrite();
   else if (parts[0] === 'edit' && parts[1]) renderWrite(parts[1]);
