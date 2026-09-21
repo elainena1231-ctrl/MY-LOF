@@ -122,20 +122,96 @@
     font-size: 14px; transition: all .2s;
   }
   .tag:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* ============ 文章卡片 ============ */
   .post {
     display: flex; gap: 16px; background: var(--card); border: 1px solid var(--border);
     border-radius: 12px; padding: 12px; margin-bottom: 14px;
-    text-decoration: none; color: inherit; transition: box-shadow .2s;
+    text-decoration: none; color: inherit; transition: box-shadow .2s, opacity .25s, transform .25s;
+    position: relative;
   }
   .post:hover { box-shadow: 0 4px 16px var(--shadow); }
   .post img {
     width: 160px; height: 110px; object-fit: cover; border-radius: 8px;
     flex-shrink: 0; background: var(--border);
   }
+  .post-body { flex: 1; min-width: 0; padding-right: 32px; }
   .post h3 { font-size: 16px; margin-bottom: 6px; color: var(--text); }
   .post p { color: var(--text-2); font-size: 14px; margin-bottom: 8px; }
   .post .meta { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .post .meta .author-inline { display: inline-flex; align-items: center; gap: 5px; }
+  .post.dismissed { opacity: 0; transform: translateX(20px); pointer-events: none; }
+
+  /* 「不感兴趣」按钮 */
+  .post-menu-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 28px; height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-3);
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    font-family: inherit;
+    opacity: 0;
+    z-index: 2;
+  }
+  .post:hover .post-menu-btn { opacity: 1; }
+  .post-menu-btn:hover { background: var(--hover-bg); color: var(--text); }
+
+  /* 小菜单弹窗 */
+  .post-menu-popup {
+    position: fixed;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    padding: 6px;
+    z-index: 400;
+    min-width: 140px;
+    animation: popIn .15s ease;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: translateY(-6px) scale(.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .post-menu-popup .pm-item {
+    padding: 8px 12px;
+    font-size: 14px;
+    color: var(--text-2);
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex; align-items: center; gap: 8px;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .post-menu-popup .pm-item:hover { background: var(--hover-bg); color: var(--text); }
+  .post-menu-popup .pm-item.danger:hover { color: #e33; }
+
+  /* 「我的」- 已隐藏列表 */
+  .hidden-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; margin-bottom: 10px;
+  }
+  .hidden-item-link {
+    flex: 1; display: flex; align-items: center; gap: 12px;
+    text-decoration: none; color: inherit; min-width: 0;
+  }
+  .hidden-item-cover {
+    width: 80px; height: 60px; object-fit: cover;
+    border-radius: 6px; flex-shrink: 0; background: var(--border);
+  }
+  .hidden-item-info { flex: 1; min-width: 0; }
+  .hidden-item-title {
+    font-size: 15px; font-weight: 500; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .hidden-item-meta { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
   .back { color: var(--text-2); font-size: 14px; text-decoration: none; display: inline-block; margin-bottom: 16px; }
   .back:hover { color: var(--primary); }
   .empty { text-align: center; color: var(--text-3); padding: 60px 0; }
@@ -196,119 +272,69 @@
   .upload-box .hint { color: var(--text-3); font-size: 14px; }
   .post-cover { width: 100%; border-radius: 12px; margin-bottom: 20px; cursor: zoom-in; }
 
-  /* ============ 文章布局 + 目录 ============ */
-  .post-layout {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-  }
+  .post-layout { display: flex; gap: 24px; align-items: flex-start; }
   .post-main { flex: 1; min-width: 0; }
   .toc-sidebar {
-    width: 200px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 90px;
-    max-height: calc(100vh - 110px);
-    overflow-y: auto;
-    padding: 16px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    font-size: 13px;
+    width: 200px; flex-shrink: 0; position: sticky; top: 90px;
+    max-height: calc(100vh - 110px); overflow-y: auto;
+    padding: 16px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px; font-size: 13px;
   }
   .toc-title {
-    font-weight: 600;
-    color: var(--text-2);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    font-weight: 600; color: var(--text-2); font-size: 12px;
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
   }
   .toc-list { list-style: none; }
   .toc-item {
-    padding: 5px 8px;
-    border-radius: 6px;
-    color: var(--text-2);
-    cursor: pointer;
-    transition: all .15s;
-    line-height: 1.4;
+    padding: 5px 8px; border-radius: 6px; color: var(--text-2);
+    cursor: pointer; transition: all .15s; line-height: 1.4;
     border-left: 2px solid transparent;
   }
   .toc-item:hover { background: var(--hover-bg); color: var(--primary); }
-  .toc-item.active {
-    color: var(--primary);
-    background: rgba(255,92,92,.08);
-    border-left-color: var(--primary);
-    font-weight: 500;
-  }
+  .toc-item.active { color: var(--primary); background: rgba(255,92,92,.08); border-left-color: var(--primary); font-weight: 500; }
   .toc-item.toc-h2 { padding-left: 8px; }
   .toc-item.toc-h3 { padding-left: 22px; font-size: 12px; }
   .toc-item.toc-h4 { padding-left: 34px; font-size: 12px; color: var(--text-3); }
   .toc-empty { color: var(--text-3); font-size: 12px; }
-
-  /* 移动端目录变成顶部按钮 + 抽屉 */
   .toc-mobile-btn {
-    display: none;
-    padding: 10px 16px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    font-size: 13px;
-    color: var(--text-2);
-    cursor: pointer;
-    margin-bottom: 16px;
-    font-family: inherit;
+    display: none; padding: 10px 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 999px; font-size: 13px; color: var(--text-2);
+    cursor: pointer; margin-bottom: 16px; font-family: inherit;
   }
   .toc-mobile-btn:hover { border-color: var(--primary); color: var(--primary); }
 
-  /* ============ 图片灯箱 ============ */
   .lightbox {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.92);
-    z-index: 500;
-    display: flex; align-items: center; justify-content: center;
-    padding: 40px 20px;
-    cursor: zoom-out;
+    position: fixed; inset: 0; background: rgba(0,0,0,.92);
+    z-index: 500; display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px; cursor: zoom-out;
     animation: lbFadeIn .2s ease;
   }
   @keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
   .lightbox img {
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 8px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.6);
-    cursor: default;
+    max-width: 100%; max-height: 100%; border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6); cursor: default;
     animation: lbZoomIn .25s ease;
   }
-  @keyframes lbZoomIn {
-    from { transform: scale(.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
+  @keyframes lbZoomIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .lightbox-close {
     position: absolute; top: 20px; right: 20px;
-    background: rgba(255,255,255,.15);
-    border: none;
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    color: #fff; font-size: 20px;
-    cursor: pointer;
+    background: rgba(255,255,255,.15); border: none;
+    width: 40px; height: 40px; border-radius: 50%;
+    color: #fff; font-size: 20px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background .2s;
   }
   .lightbox-close:hover { background: rgba(255,255,255,.3); }
   .lightbox-hint {
     position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-    color: rgba(255,255,255,.5); font-size: 13px;
-    pointer-events: none;
+    color: rgba(255,255,255,.5); font-size: 13px; pointer-events: none;
   }
 
   .post-content { font-size: 16px; color: var(--text-2); line-height: 1.75; }
   .post-content h1, .post-content h2, .post-content h3, .post-content h4 {
-    margin: 20px 0 10px; color: var(--text);
-    scroll-margin-top: 90px;
+    margin: 20px 0 10px; color: var(--text); scroll-margin-top: 90px;
   }
   .post-content h1 { font-size: 24px; }
   .post-content h2 { font-size: 20px; }
@@ -348,9 +374,7 @@
     font-size: 13px; color: var(--text-3); margin-bottom: 6px;
   }
   .comment-item .c-head .c-author-name { color: var(--text-2); }
-  .comment-item .c-actions {
-    margin-left: auto; display: flex; gap: 10px; font-size: 12px;
-  }
+  .comment-item .c-actions { margin-left: auto; display: flex; gap: 10px; font-size: 12px; }
   .comment-item .c-actions span { cursor: pointer; color: var(--text-3); }
   .comment-item .c-actions span:hover { color: var(--primary); }
   .comment-item .c-actions .del:hover { color: #e33; }
@@ -416,8 +440,7 @@
   .collection-body h3 { font-size: 15px; margin-bottom: 4px; color: var(--text); }
   .collection-body p { font-size: 13px; color: var(--text-3); }
   .collection-header {
-    display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;
-    margin-bottom: 24px;
+    display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 24px;
   }
   .collection-header .ch-cover {
     width: 200px; height: 140px; border-radius: 12px; object-fit: cover;
@@ -633,18 +656,15 @@
   .draft-banner .discard-btn { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
   .draft-status {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 12px; color: var(--text-3);
-    margin-left: 12px;
+    font-size: 12px; color: var(--text-3); margin-left: 12px;
   }
   .ql-toolbar.ql-snow {
     border-radius: 12px 12px 0 0;
-    border-color: var(--border);
-    background: var(--card);
+    border-color: var(--border); background: var(--card);
   }
   .ql-container.ql-snow {
     border-radius: 0 0 12px 12px;
-    border-color: var(--border);
-    font-size: 15px; font-family: inherit;
+    border-color: var(--border); font-size: 15px; font-family: inherit;
     background: var(--card); color: var(--text);
   }
   .ql-editor { min-height: 320px; font-family: inherit; font-size: 15px; line-height: 1.75; color: var(--text); }
@@ -674,6 +694,7 @@
     .mobile-nav { display: block; }
     .sync-status { bottom: 76px; }
     .post img { width: 100px; height: 80px; }
+    .post-menu-btn { opacity: .6; }
     .user-chip span { display: none; }
     .user-chip { padding: 2px; border: none; background: transparent; }
     .container { padding: 20px 14px; }
@@ -720,9 +741,7 @@ function checkContent(text) {
   if (!text) return { ok: true, hits: [] };
   const lower = String(text).toLowerCase();
   const hits = [];
-  for (const w of SENSITIVE_WORDS) {
-    if (lower.includes(w.toLowerCase())) hits.push(w);
-  }
+  for (const w of SENSITIVE_WORDS) if (lower.includes(w.toLowerCase())) hits.push(w);
   return { ok: hits.length === 0, hits };
 }
 function showSensitiveError(hits) {
@@ -731,11 +750,52 @@ function showSensitiveError(hits) {
   alert('内容包含不允许的词汇：' + masked + extra + '\n\n请修改后再试。');
 }
 
+// ==================== 不感兴趣 ====================
+const KEY_HIDDEN = 'my_hidden_posts';
+let hiddenPosts = new Set(JSON.parse(localStorage.getItem(KEY_HIDDEN) || '[]'));
+function saveHiddenPosts() {
+  try {
+    // localStorage 里 Set 不能直接存，转成数组
+    localStorage.setItem(KEY_HIDDEN, JSON.stringify(Array.from(hiddenPosts)));
+  } catch (e) {}
+}
+function hidePost(postId, btnEl) {
+  hiddenPosts.add(postId);
+  saveHiddenPosts();
+  // 淡出移除
+  const card = btnEl ? btnEl.closest('.post') : null;
+  if (card) {
+    card.classList.add('dismissed');
+    setTimeout(() => {
+      card.remove();
+      // 检查当前容器是否已空，显示提示
+      const containers = document.querySelectorAll('#app .post');
+      if (containers.length === 0) {
+        // 不强制重渲染，用户刷新即可
+      }
+    }, 260);
+  }
+  showSync('已隐藏，可在「我的」页面恢复');
+  // 更新我的页面里的隐藏数量（如果正在看）
+  if (currentRoute() === 'me' && meTab === 'hidden') renderMe();
+}
+function unhidePost(postId) {
+  hiddenPosts.delete(postId);
+  saveHiddenPosts();
+  showSync('已恢复显示');
+}
+// 过滤掉隐藏的文章（自己的文章例外，无论如何都显示）
+function visiblePosts(list) {
+  return list.filter(p => {
+    if (!hiddenPosts.has(p.id)) return true;
+    if (currentUser && String(p.userId) === String(currentUser.id)) return true;
+    return false;
+  });
+}
+
 // ==================== 实时通知 ====================
 const POLL_INTERVAL = 30000;
-let pollTimer = null;
-let pollPaused = false;
-
+let pollTimer = null, pollPaused = false;
 function startPolling() {
   stopPolling();
   if (!currentUser) return;
@@ -746,8 +806,7 @@ async function checkNewNotifications() {
   if (!currentUser || !loaded || pollPaused) return;
   try {
     const uid = String(currentUser.id);
-    const { count, error } = await supabase
-      .from('notifications')
+    const { count, error } = await supabase.from('notifications')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', uid).eq('is_read', false);
     if (error) return;
@@ -757,11 +816,8 @@ async function checkNewNotifications() {
       myUnreadCount = newCount;
       renderHeader();
       showNewNotifToast(diff);
-      if (currentRoute() === 'notifications') {
-        await reloadNotifications(); renderNotifications();
-      } else {
-        reloadNotifications().catch(() => {});
-      }
+      if (currentRoute() === 'notifications') { await reloadNotifications(); renderNotifications(); }
+      else { reloadNotifications().catch(() => {}); }
     } else if (newCount < myUnreadCount) {
       myUnreadCount = newCount; renderHeader();
     }
@@ -771,8 +827,7 @@ async function reloadNotifications() {
   if (!currentUser) return;
   const uid = String(currentUser.id);
   const { data, error } = await supabase.from('notifications')
-    .select('*').eq('user_id', uid)
-    .order('created_at', { ascending: false }).limit(100);
+    .select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(100);
   if (error) return;
   myNotifications = (data || []).map(rowToNotif);
   myUnreadCount = myNotifications.filter(n => !n.isRead).length;
@@ -867,7 +922,8 @@ async function loginUser(loginName, password) {
 }
 
 // ==================== 数据 ====================
-let posts = [], collections = [], loaded = false;
+let posts = [], collections = [], tags = [], allUsers = [], usersByName = {};
+let loaded = false;
 let followedTags = JSON.parse(localStorage.getItem('my_followed_tags') || '[]');
 let myLikes = JSON.parse(localStorage.getItem('my_likes') || '[]');
 let myFavorites = new Set(), followedAuthors = new Set();
@@ -943,7 +999,6 @@ async function loadAll() {
     const me = allUsers.find(u => String(u.id) === String(currentUser.id));
     if (me) { currentUser.avatar = me.avatar; currentUser.displayName = me.displayName; saveUser(currentUser); }
   }
-
   posts.forEach(p => {
     if (p.collectionId && !collections.find(c => c.id === p.collectionId)) p.collectionId = null;
   });
@@ -1008,7 +1063,6 @@ async function createTag(name) {
   }
   const newTag = rowToTag(data); tags.push(newTag); return newTag;
 }
-
 async function syncPost(p) {
   const { error } = await supabase.from('posts').upsert(postToRow(p));
   if (error) { showSync('同步失败：' + error.message, true); return false; }
@@ -1088,7 +1142,6 @@ function clearDraft(editingId) {
 
 // ==================== 图片灯箱 ====================
 function openLightbox(imgSrc) {
-  // 移除已有的
   document.querySelectorAll('.lightbox').forEach(el => el.remove());
   const lb = document.createElement('div');
   lb.className = 'lightbox';
@@ -1115,33 +1168,24 @@ function openLightbox(imgSrc) {
 function buildTOC() {
   const content = document.querySelector('.post-content');
   if (!content) return;
-
-  // 收集 h1-h4
   const headings = content.querySelectorAll('h1, h2, h3, h4');
-  if (headings.length < 2) return; // 太少不显示
-
+  if (headings.length < 2) return;
   const tocList = [];
   const usedIds = new Set();
   headings.forEach((h, i) => {
-    // 生成 id（去重）
     let baseId = 'heading-' + i;
-    let id = baseId;
-    let n = 0;
+    let id = baseId, n = 0;
     while (usedIds.has(id)) { n++; id = baseId + '-' + n; }
     usedIds.add(id);
     h.id = id;
-    const level = parseInt(h.tagName.substring(1), 10); // 1-4
+    const level = parseInt(h.tagName.substring(1), 10);
     tocList.push({ id, level, text: h.textContent.trim() });
   });
-
-  // 桌面端侧边栏
   const sidebar = document.getElementById('tocSidebar');
   if (sidebar) {
     sidebar.innerHTML = `
       <div class="toc-title">📖 目录</div>
-      <ul class="toc-list">
-        ${tocList.map(t => `<li class="toc-item toc-h${t.level}" data-target="${t.id}">${escapeHTML(t.text)}</li>`).join('')}
-      </ul>
+      <ul class="toc-list">${tocList.map(t => `<li class="toc-item toc-h${t.level}" data-target="${t.id}">${escapeHTML(t.text)}</li>`).join('')}</ul>
     `;
     sidebar.style.display = 'block';
     sidebar.querySelectorAll('.toc-item').forEach(el => {
@@ -1151,8 +1195,6 @@ function buildTOC() {
       });
     });
   }
-
-  // 移动端按钮（点击后滚动到侧边栏目录？不，直接生成一个抽屉？这里简化为直接显示为一个列表弹窗）
   const mobileBtn = document.getElementById('tocMobileBtn');
   if (mobileBtn) {
     mobileBtn.style.display = 'inline-block';
@@ -1160,14 +1202,7 @@ function buildTOC() {
     mobileBtn.addEventListener('click', () => {
       const modal = document.createElement('div');
       modal.className = 'modal-mask';
-      modal.innerHTML = `
-        <div class="modal">
-          <h3>目录</h3>
-          <ul class="toc-list" style="margin-top:12px;">
-            ${tocList.map(t => `<li class="toc-item toc-h${t.level}" data-target="${t.id}" style="cursor:pointer;">${escapeHTML(t.text)}</li>`).join('')}
-          </ul>
-        </div>
-      `;
+      modal.innerHTML = `<div class="modal"><h3>目录</h3><ul class="toc-list" style="margin-top:12px;">${tocList.map(t => `<li class="toc-item toc-h${t.level}" data-target="${t.id}" style="cursor:pointer;">${escapeHTML(t.text)}</li>`).join('')}</ul></div>`;
       document.body.appendChild(modal);
       modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
       modal.querySelectorAll('.toc-item').forEach(el => {
@@ -1179,8 +1214,6 @@ function buildTOC() {
       });
     });
   }
-
-  // 滚动高亮
   let scrollListener = null;
   const updateActive = () => {
     let current = null;
@@ -1199,23 +1232,17 @@ function buildTOC() {
   scrollListener = () => { requestAnimationFrame(updateActive); };
   window.addEventListener('scroll', scrollListener, { passive: true });
   updateActive();
-
-  // 页面切换时清理
   window.__tocCleanup = () => {
     if (scrollListener) window.removeEventListener('scroll', scrollListener);
     window.__tocCleanup = null;
   };
 }
-
 function cleanupTOC() {
   if (window.__tocCleanup) window.__tocCleanup();
 }
 
 // ==================== 渲染头部 ====================
 const app = document.getElementById('app');
-let allUsers = [];
-let usersByName = {};
-let tags = [];
 if (localStorage.getItem('my_theme') === 'dark') document.body.classList.add('dark');
 
 function currentRoute() {
@@ -1231,9 +1258,7 @@ function avatarHTML(name, size, cls) {
   const clsStr = cls ? ('avatar ' + cls) : 'avatar';
   const url = avatarURL(name);
   const first = (name || '?')[0];
-  if (url) {
-    return `<img class="${clsStr}" src="${url}" alt="${escapeHTML(name)}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.45)}px;" />`;
-  }
+  if (url) return `<img class="${clsStr}" src="${url}" alt="${escapeHTML(name)}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.45)}px;" />`;
   return `<div class="${clsStr}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.45)}px;">${escapeHTML(first)}</div>`;
 }
 function currentUserAvatarHTML(size) {
@@ -1246,10 +1271,8 @@ function currentUserAvatarHTML(size) {
 function renderHeader() {
   const r = currentRoute();
   const active = {
-    '': r === '' ? 'active' : '',
-    'tags': r === 'tags' ? 'active' : '',
-    'collections': r === 'collections' ? 'active' : '',
-    'me': r === 'me' ? 'active' : '',
+    '': r === '' ? 'active' : '', 'tags': r === 'tags' ? 'active' : '',
+    'collections': r === 'collections' ? 'active' : '', 'me': r === 'me' ? 'active' : '',
   };
   const nav = document.getElementById('mainNav');
   nav.innerHTML = `
@@ -1258,7 +1281,6 @@ function renderHeader() {
     <a href="#/collections" class="${active['collections']}">合集</a>
     <a href="${currentUser ? '#/me' : '#/login'}" class="${active['me']}">我的</a>
   `;
-
   const right = document.getElementById('navRight');
   const searchBtn = `<a href="#/search" class="icon-btn" id="searchNavBtn" title="搜索">🔍</a>`;
   const notifBtn = currentUser
@@ -1269,7 +1291,6 @@ function renderHeader() {
   const userArea = currentUser
     ? `<a href="#/me" class="user-chip" id="userChip">${currentUserAvatarHTML(28)}<span>${escapeHTML(displayName())}</span></a>`
     : `<a href="#/login" class="mini-btn">登录</a>`;
-
   right.innerHTML = searchBtn + notifBtn + themeBtn + writeBtn + userArea;
 
   document.getElementById('themeBtn').addEventListener('click', () => {
@@ -1278,7 +1299,6 @@ function renderHeader() {
     updateThemeBtn();
   });
   updateThemeBtn();
-
   if (r === 'search') { const sb = document.getElementById('searchNavBtn'); if (sb) { sb.style.borderColor = 'var(--primary)'; sb.style.color = 'var(--primary)'; } }
   if (r === 'notifications') { const nb = document.getElementById('notifNavBtn'); if (nb) { nb.style.borderColor = 'var(--primary)'; nb.style.color = 'var(--primary)'; } }
 
@@ -1286,8 +1306,7 @@ function renderHeader() {
   const mActive = {
     '': r === '' ? 'active' : '', 'tags': r === 'tags' ? 'active' : '',
     'collections': r === 'collections' ? 'active' : '',
-    'write': (r === 'write' || r === 'edit') ? 'active' : '',
-    'me': r === 'me' ? 'active' : '',
+    'write': (r === 'write' || r === 'edit') ? 'active' : '', 'me': r === 'me' ? 'active' : '',
   };
   const meLink = currentUser ? '#/me' : '#/login';
   mobileNav.innerHTML = `
@@ -1306,7 +1325,6 @@ function updateThemeBtn() {
   if (!btn) return;
   btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
 }
-
 function escapeHTML(str) {
   return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -1326,9 +1344,9 @@ function postCardHTML(p) {
   const faved = myFavorites.has(p.id);
   const excerptText = p.excerpt || (looksLikeHTML(p.content) ? extractTextFromHTML(p.content).slice(0, 60) : (p.content || '').slice(0, 60));
   return `
-    <a class="post" href="#/post/${p.id}">
+    <a class="post" href="#/post/${p.id}" data-post-id="${p.id}">
       <img src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
-      <div>
+      <div class="post-body">
         <h3>${escapeHTML(p.title)}</h3>
         <p>${escapeHTML(excerptText)}</p>
         <span class="meta">
@@ -1338,6 +1356,7 @@ function postCardHTML(p) {
           ${coll ? ' · 📚 ' + escapeHTML(coll.name) : ''}
         </span>
       </div>
+      <button class="post-menu-btn" data-post-id="${p.id}" title="更多操作" aria-label="更多操作">⋯</button>
     </a>
   `;
 }
@@ -1413,6 +1432,54 @@ async function saveAvatar(url) {
   rebuildUsersByName();
 }
 
+// ==================== 「不感兴趣」弹窗 ====================
+function showPostMenu(postId, btnEl) {
+  // 关闭已有的
+  document.querySelectorAll('.post-menu-popup').forEach(el => el.remove());
+  const popup = document.createElement('div');
+  popup.className = 'post-menu-popup';
+  popup.innerHTML = `
+    <div class="pm-item" data-action="hide">🚫 不感兴趣</div>
+  `;
+  document.body.appendChild(popup);
+
+  // 定位到按钮下方
+  const rect = btnEl.getBoundingClientRect();
+  const popupWidth = 140;
+  let left = rect.right - popupWidth;
+  let top = rect.bottom + 4;
+  if (left < 8) left = 8;
+  if (top + 50 > window.innerHeight) top = rect.top - 44;
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+
+  // 点击外部关闭
+  const closeAll = (e) => {
+    if (!popup.contains(e.target)) {
+      popup.remove();
+      document.removeEventListener('click', closeAll, true);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeAll, true), 0);
+
+  popup.querySelector('[data-action="hide"]').addEventListener('click', (e) => {
+    e.stopPropagation();
+    popup.remove();
+    document.removeEventListener('click', closeAll, true);
+    hidePost(postId, btnEl);
+  });
+}
+
+// 全局事件委托：所有「⋯」按钮的点击
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.post-menu-btn');
+  if (btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    showPostMenu(Number(btn.dataset.postId), btn);
+  }
+});
+
 /* ============ 登录 ============ */
 function renderLogin() {
   cleanupTOC();
@@ -1422,14 +1489,8 @@ function renderLogin() {
         <h1>欢迎回来</h1>
         <p class="auth-sub">用你的登录名和密码登录</p>
         <div id="authError"></div>
-        <div class="form-group">
-          <label>登录名</label>
-          <input type="text" id="loginName" placeholder="注册时填的登录名" autocomplete="username" />
-        </div>
-        <div class="form-group">
-          <label>密码</label>
-          <input type="password" id="password" placeholder="你的密码" autocomplete="current-password" />
-        </div>
+        <div class="form-group"><label>登录名</label><input type="text" id="loginName" placeholder="注册时填的登录名" autocomplete="username" /></div>
+        <div class="form-group"><label>密码</label><input type="password" id="password" placeholder="你的密码" autocomplete="current-password" /></div>
         <button class="submit-btn" id="loginBtn">登录</button>
         <p class="auth-switch">还没有账号？<a href="#/register">立即注册</a></p>
       </div>
@@ -1465,19 +1526,9 @@ function renderRegister() {
         <h1>创建账号</h1>
         <p class="auth-sub">不需要邮箱，取个登录名就行</p>
         <div id="authError"></div>
-        <div class="form-group">
-          <label>显示名（别人看到的名字）</label>
-          <input type="text" id="displayNameInput" placeholder="例如：小明" maxlength="20" />
-        </div>
-        <div class="form-group">
-          <label>登录名（登录用）</label>
-          <input type="text" id="loginName" placeholder="例如：xiaoming" autocomplete="username" maxlength="20" />
-          <p class="form-hint">3-20 位，只能包含小写字母、数字、下划线。</p>
-        </div>
-        <div class="form-group">
-          <label>密码</label>
-          <input type="password" id="password" placeholder="至少 6 位" autocomplete="new-password" />
-        </div>
+        <div class="form-group"><label>显示名（别人看到的名字）</label><input type="text" id="displayNameInput" placeholder="例如：小明" maxlength="20" /></div>
+        <div class="form-group"><label>登录名（登录用）</label><input type="text" id="loginName" placeholder="例如：xiaoming" autocomplete="username" maxlength="20" /><p class="form-hint">3-20 位，只能包含小写字母、数字、下划线。</p></div>
+        <div class="form-group"><label>密码</label><input type="password" id="password" placeholder="至少 6 位" autocomplete="new-password" /></div>
         <button class="submit-btn" id="registerBtn">注册</button>
         <p class="auth-switch">已有账号？<a href="#/login">去登录</a></p>
       </div>
@@ -1539,7 +1590,6 @@ function renderNotifications() {
     `;
   }).join('');
   const moreHTML = loadMoreHTML(notifVisible, myNotifications.length, true);
-
   app.innerHTML = `
     <div class="container">
       <div class="section-head">
@@ -1551,7 +1601,6 @@ function renderNotifications() {
       ${moreHTML}
     </div>
   `;
-
   document.querySelectorAll('.notif-item').forEach(el => {
     el.addEventListener('click', async () => {
       const id = Number(el.dataset.notifId);
@@ -1583,9 +1632,7 @@ function renderSearch() {
     <div class="container">
       <h1>搜索</h1>
       <p class="sub">找文章、标签、作者</p>
-      <div class="search-bar search-big">
-        <input type="text" id="bigSearchInput" placeholder="输入关键词，例如：插画、旅行、小明…" />
-      </div>
+      <div class="search-bar search-big"><input type="text" id="bigSearchInput" placeholder="输入关键词，例如：插画、旅行、小明…" /></div>
       <div id="searchResults"></div>
     </div>
   `;
@@ -1604,12 +1651,12 @@ function updateSearchResults() {
     container.innerHTML = `<div class="search-empty-hint"><div class="big">🔍</div><div class="hint-line">输入关键词开始搜索</div><div class="small">可以搜索文章标题、正文、标签名、作者名</div></div>`;
     return;
   }
-  const matchedPosts = posts.filter(p => {
+  const matchedPosts = visiblePosts(posts.filter(p => {
     const contentText = looksLikeHTML(p.content) ? extractTextFromHTML(p.content) : (p.content || '');
     return p.title.toLowerCase().includes(kw) || contentText.toLowerCase().includes(kw) ||
       (p.excerpt || '').toLowerCase().includes(kw) || p.author.toLowerCase().includes(kw) ||
       p.tags.some(s => { const t = tags.find(x => x.slug === s); return t && t.name.toLowerCase().includes(kw); });
-  }).sort((a, b) => b.id - a.id);
+  })).sort((a, b) => b.id - a.id);
   const matchedTags = tags.filter(t => t.name.toLowerCase().includes(kw) || (t.desc || '').toLowerCase().includes(kw));
   const authorMap = {};
   posts.forEach(p => {
@@ -1626,7 +1673,6 @@ function updateSearchResults() {
     <span class="tab ${searchTab === 'tags' ? 'active' : ''}" data-search-tab="tags">标签 (${matchedTags.length})</span>
     <span class="tab ${searchTab === 'users' ? 'active' : ''}" data-search-tab="users">作者 (${matchedAuthors.length})</span>
   </div>`;
-
   if (totalCount === 0) {
     html += `<div class="search-empty-hint"><div class="big">😶</div><div class="hint-line">没有找到与「${escapeHTML(rawKw)}」相关的内容</div><div class="small">换个关键词试试</div></div>`;
     container.innerHTML = html; bindSearchTabs(); return;
@@ -1634,7 +1680,6 @@ function updateSearchResults() {
   const showPosts = searchTab === 'all' || searchTab === 'posts';
   const showTags = searchTab === 'all' || searchTab === 'tags';
   const showUsers = searchTab === 'all' || searchTab === 'users';
-
   if (showTags && matchedTags.length) {
     html += `<h2>标签 (${matchedTags.length})</h2><div class="tag-grid">${matchedTags.map(t => {
       const count = posts.filter(p => p.tags.includes(t.slug)).length;
@@ -1675,6 +1720,8 @@ function renderHome() {
         p.tags.some(s => { const t = tags.find(x => x.slug === s); return t && (t.name.toLowerCase().includes(kw) || s.toLowerCase().includes(kw)); });
     });
   }
+  // 过滤已隐藏
+  list = visiblePosts(list);
   if (homeSort === 'hot') list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   else list.sort((a, b) => b.id - a.id);
 
@@ -1734,7 +1781,7 @@ function renderTag(slug) {
   const tag = tags.find(t => t.slug === decoded);
   if (!tag) { app.innerHTML = `<div class="container"><p class="empty">标签不存在</p></div>`; return; }
   const isFollowed = followedTags.includes(tag.slug);
-  let list = posts.filter(p => p.tags.includes(tag.slug));
+  let list = visiblePosts(posts.filter(p => p.tags.includes(tag.slug)));
   if (tagSort === 'hot') list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   else list.sort((a, b) => b.id - a.id);
   let listHTML;
@@ -1775,7 +1822,8 @@ function renderMe() {
   const name = displayName();
   const myPosts = posts.filter(p => String(p.userId) === String(currentUser.id)).sort((a, b) => b.id - a.id);
   const myColls = collections.filter(c => String(c.userId) === String(currentUser.id)).sort((a, b) => b.id - a.id);
-  const myFavPosts = posts.filter(p => myFavorites.has(p.id)).sort((a, b) => b.id - a.id);
+  const myFavPosts = visiblePosts(posts.filter(p => myFavorites.has(p.id))).sort((a, b) => b.id - a.id);
+  const hiddenList = posts.filter(p => hiddenPosts.has(p.id));
   const totalLikes = myPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
 
   let tabContent = '';
@@ -1803,6 +1851,24 @@ function renderMe() {
     const followed = Array.from(followedAuthors);
     if (followed.length) tabContent = `<div class="tag-grid">${followed.map(n => userCardHTML(n)).join('')}</div>`;
     else tabContent = `<p class="empty">你还没有关注任何作者</p>`;
+  } else if (meTab === 'hidden') {
+    if (hiddenList.length) {
+      tabContent = `
+        <p style="font-size:13px;color:var(--text-3);margin-bottom:14px;">这些文章不会出现在你的首页、搜索和列表里。点「恢复」会重新显示。</p>
+        ${hiddenList.map(p => `
+          <div class="hidden-item">
+            <a class="hidden-item-link" href="#/post/${p.id}">
+              <img class="hidden-item-cover" src="${coverOf(p)}" alt="" />
+              <div class="hidden-item-info">
+                <div class="hidden-item-title">${escapeHTML(p.title)}</div>
+                <div class="hidden-item-meta">${escapeHTML(p.author)} · ${p.date}</div>
+              </div>
+            </a>
+            <button class="mini-btn" data-restore="${p.id}">恢复</button>
+          </div>
+        `).join('')}
+      `;
+    } else tabContent = `<p class="empty">你还没有隐藏任何文章</p>`;
   }
 
   app.innerHTML = `
@@ -1837,6 +1903,7 @@ function renderMe() {
         <span class="tab ${meTab === 'collections' ? 'active' : ''}" data-me="collections">我的合集 (${myColls.length})</span>
         <span class="tab ${meTab === 'tags' ? 'active' : ''}" data-me="tags">关注的标签 (${followedTags.length})</span>
         <span class="tab ${meTab === 'authors' ? 'active' : ''}" data-me="authors">关注的作者 (${followedAuthors.size})</span>
+        <span class="tab ${meTab === 'hidden' ? 'active' : ''}" data-me="hidden">已隐藏 (${hiddenList.length})</span>
       </div>
       ${tabContent}
     </div>
@@ -1861,6 +1928,15 @@ function renderMe() {
   document.querySelectorAll('.tab[data-me]').forEach(el => el.addEventListener('click', () => {
     meTab = el.dataset.me; meVisible = PAGE_SIZE; meFavVisible = PAGE_SIZE; renderMe();
   }));
+  // 恢复按钮
+  document.querySelectorAll('[data-restore]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pid = Number(btn.dataset.restore);
+      unhidePost(pid);
+      renderMe();
+    });
+  });
   document.getElementById('logoutBtn').addEventListener('click', () => {
     if (!confirm('确定退出登录？')) return;
     stopPolling(); saveUser(null); location.hash = '#/'; location.reload();
@@ -1876,7 +1952,7 @@ function renderMe() {
 function renderUser(name) {
   cleanupTOC();
   const decoded = decodeURIComponent(name);
-  const list = posts.filter(p => p.author === decoded).sort((a, b) => b.id - a.id);
+  const list = visiblePosts(posts.filter(p => p.author === decoded)).sort((a, b) => b.id - a.id);
   const myColls = collections.filter(c => c.author === decoded);
   const isMe = currentUser && decoded === displayName();
   const isFollowing = followedAuthors.has(decoded);
@@ -1932,7 +2008,7 @@ function renderCollection(id) {
   const c = collections.find(x => x.id === Number(id));
   if (!c) { app.innerHTML = `<div class="container"><p class="empty">合集不存在</p></div>`; return; }
   const isMine = currentUser && String(c.userId) === String(currentUser.id);
-  const list = posts.filter(p => p.collectionId === c.id).sort((a, b) => b.id - a.id);
+  const list = visiblePosts(posts.filter(p => p.collectionId === c.id)).sort((a, b) => b.id - a.id);
   let listHTML;
   if (list.length) {
     const shown = list.slice(0, collectionVisible);
@@ -2177,7 +2253,6 @@ function renderPost(id) {
           <div class="post-content">${contentDisplay}</div>
           <div class="tags" style="margin-top:24px;">${tagHTML}</div>
           ${collHTML}
-
           <div class="action-bar">
             <button class="action-btn ${liked ? 'liked' : ''}" id="likeBtn">${liked ? '♥' : '♡'} 点赞 ${p.likes}</button>
             <button class="action-btn ${faved ? 'faved' : ''}" id="favBtn">${faved ? '⭐' : '☆'} ${faved ? '已收藏' : '收藏'}</button>
@@ -2186,7 +2261,6 @@ function renderPost(id) {
             ${isMine ? `<button class="action-btn danger" id="deleteBtn">删除文章</button>` : ''}
           </div>
           <div style="text-align:right;margin-top:-16px;margin-bottom:8px;">${reportBtn}</div>
-
           <div class="comments">
             <h2 style="margin-top:0;">评论 (${p.comments.length})</h2>
             <div id="commentList">${commentsHTML}</div>
@@ -2198,14 +2272,10 @@ function renderPost(id) {
     </div>
   `;
 
-  // 构建目录
   buildTOC();
 
-  // 图片灯箱：点封面和正文里的图都能放大
   const coverImg = document.querySelector('.post-cover');
-  if (coverImg) {
-    coverImg.addEventListener('click', () => openLightbox(coverImg.src));
-  }
+  if (coverImg) coverImg.addEventListener('click', () => openLightbox(coverImg.src));
   document.querySelectorAll('.post-content img').forEach(img => {
     img.addEventListener('click', () => openLightbox(img.src));
   });
@@ -2215,9 +2285,8 @@ function renderPost(id) {
 
   document.getElementById('likeBtn').addEventListener('click', async () => {
     const wasLiked = myLikes.includes(p.id);
-    if (wasLiked) {
-      myLikes = myLikes.filter(x => x !== p.id); p.likes = Math.max(0, p.likes - 1);
-    } else {
+    if (wasLiked) { myLikes = myLikes.filter(x => x !== p.id); p.likes = Math.max(0, p.likes - 1); }
+    else {
       myLikes.push(p.id); p.likes += 1;
       if (p.userId && currentUser) await createNotification({ userId: p.userId, type: 'like', postId: p.id, postTitle: p.title });
     }
@@ -2539,7 +2608,6 @@ function router() {
   if (parts[0] !== 'write' && parts[0] !== 'edit') {
     currentDraftKey = null; currentDraftEditingId = null; clearTimeout(autosaveTimer);
   }
-  // 路由切换时清理目录滚动监听
   cleanupTOC();
 
   renderHeader();
