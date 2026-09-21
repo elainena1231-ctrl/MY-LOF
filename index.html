@@ -2573,4 +2573,15 @@ async function init() {
       <div class="container">
         <div class="empty">
           <p style="color:#e33;font-size:16px;margin-bottom:12px;">连接数据库失败</p>
-          <p style="font-size:13px;color:var
+          <p style="font-size:13px;color:var(--text-3);">${escapeHTML(e.message || e)}</p>
+        </div>
+      </div>`;
+  }
+}
+
+window.addEventListener('hashchange', router);
+init();
+</script>
+
+</body>
+</html>
