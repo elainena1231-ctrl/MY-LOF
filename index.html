@@ -79,6 +79,46 @@
     object-fit: cover; overflow: hidden; flex-shrink: 0;
   }
   .avatar-sm { width: 20px; height: 20px; font-size: 10px; }
+
+  /* 移动端底部导航 */
+  .mobile-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    z-index: 90;
+    padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+  }
+  .mobile-nav-inner {
+    display: flex; align-items: center; justify-content: space-around;
+    max-width: 600px; margin: 0 auto;
+  }
+  .mobile-nav a {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px;
+    padding: 6px 0;
+    text-decoration: none;
+    color: var(--text-3);
+    font-size: 11px;
+    transition: color .2s;
+    position: relative;
+  }
+  .mobile-nav a.active { color: var(--primary); }
+  .mobile-nav a .mnav-icon { font-size: 20px; line-height: 1; }
+  .mobile-nav a .notif-badge {
+    top: 0; right: calc(50% - 16px);
+  }
+  .mobile-nav a.mnav-write .mnav-icon {
+    background: var(--primary); color: #fff;
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-top: -14px;
+    box-shadow: 0 4px 12px rgba(255,92,92,.4);
+  }
+  .mobile-nav a.mnav-write span:last-child { margin-top: 2px; }
+
   h1 { font-size: 26px; margin-bottom: 6px; }
   h2 { font-size: 18px; margin: 24px 0 12px; }
   .sub { color: var(--text-3); margin-bottom: 24px; }
@@ -196,8 +236,32 @@
     background: var(--card); border: 1px solid var(--border); border-radius: 10px;
     padding: 12px 16px; margin-bottom: 10px;
   }
-  .comment-item .c-author { font-size: 13px; color: var(--text-3); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-  .comment-item .c-content { font-size: 15px; color: var(--text); }
+  .comment-item .c-head {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-3); margin-bottom: 6px;
+  }
+  .comment-item .c-head .c-author-name { color: var(--text-2); }
+  .comment-item .c-actions {
+    margin-left: auto; display: flex; gap: 10px;
+    font-size: 12px;
+  }
+  .comment-item .c-actions span { cursor: pointer; color: var(--text-3); }
+  .comment-item .c-actions span:hover { color: var(--primary); }
+  .comment-item .c-actions .del:hover { color: #e33; }
+  .comment-item .c-content { font-size: 15px; color: var(--text); word-break: break-word; }
+  .comment-edit-row { display: flex; gap: 8px; margin-top: 4px; }
+  .comment-edit-row input {
+    flex: 1; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    background: var(--bg); color: var(--text); outline: none;
+  }
+  .comment-edit-row input:focus { border-color: var(--primary); }
+  .comment-edit-row button {
+    padding: 8px 16px; border-radius: 999px; border: none;
+    font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .comment-edit-row .save-btn { background: var(--primary); color: #fff; }
+  .comment-edit-row .cancel-btn { background: var(--hover-bg); color: var(--text-2); }
   .comment-form { display: flex; gap: 8px; margin-top: 16px; }
   .comment-form input {
     flex: 1; padding: 10px 14px; border: 1px solid var(--border);
@@ -296,7 +360,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .sync-status {
-    position: fixed; bottom: 16px; right: 16px;
+    position: fixed; bottom: 76px; right: 16px;
     background: var(--card); border: 1px solid var(--border);
     padding: 8px 16px; border-radius: 999px;
     font-size: 13px; color: var(--text-2);
@@ -421,6 +485,28 @@
     background: var(--primary); border-radius: 50%;
     margin-left: 6px; vertical-align: middle;
   }
+  /* 草稿恢复提示 */
+  .draft-banner {
+    display: flex; gap: 12px; align-items: center;
+    background: rgba(255,92,92,.08);
+    border: 1px solid rgba(255,92,92,.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  .draft-banner .draft-msg { flex: 1; color: var(--text-2); }
+  .draft-banner button {
+    padding: 6px 14px; border-radius: 999px; font-size: 13px;
+    cursor: pointer; font-family: inherit; border: none;
+  }
+  .draft-banner .restore-btn { background: var(--primary); color: #fff; }
+  .draft-banner .discard-btn { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+  .draft-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-3);
+    margin-left: 12px;
+  }
   /* Quill 编辑器 */
   .ql-toolbar.ql-snow {
     border-radius: 12px 12px 0 0;
@@ -449,12 +535,19 @@
   body.dark .ql-editor.ql-blank::before { color: var(--text-3); }
   body.dark .ql-snow .ql-tooltip { background: var(--card); border-color: var(--border); color: var(--text); }
   body.dark .ql-snow .ql-tooltip input[type=text] { background: var(--hover-bg); border-color: var(--border); color: var(--text); }
-  @media (max-width: 640px) {
+
+  @media (max-width: 768px) {
+    body { padding-bottom: 68px; }
+    .main-nav { display: none; }
+    .nav-right .write-btn { display: none; }
     .header .container { gap: 8px; }
-    .main-nav a { padding: 6px 10px; font-size: 13px; }
-    .write-btn { padding: 6px 12px; font-size: 12px; }
+    .mobile-nav { display: block; }
+    .sync-status { bottom: 76px; }
     .post img { width: 100px; height: 80px; }
     .user-chip span { display: none; }
+    .user-chip { padding: 2px; border: none; background: transparent; }
+    .container { padding: 20px 14px; }
+    h1 { font-size: 22px; }
   }
 </style>
 </head>
@@ -467,6 +560,8 @@
     <div class="nav-right" id="navRight"></div>
   </div>
 </div>
+
+<nav class="mobile-nav" id="mobileNav"></nav>
 
 <div id="app"></div>
 <div class="sync-status" id="syncStatus"></div>
@@ -502,7 +597,6 @@ function extractTextFromHTML(html) {
   if (!html) return '';
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
-  // 把 <br> 和块级标签换成换行符
   tmp.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
   tmp.querySelectorAll('p, div, h1, h2, h3, h4, li, blockquote').forEach(el => {
     el.appendChild(document.createTextNode('\n'));
@@ -569,6 +663,7 @@ async function loginUser(loginName, password) {
   return data;
 }
 
+// ==================== 数据 ====================
 let posts = [];
 let collections = [];
 let loaded = false;
@@ -792,6 +887,30 @@ async function toggleFollowAuthor(name) {
   }
 }
 
+// ==================== 草稿 ====================
+let autosaveTimer = null;
+let currentDraftKey = null;
+let currentDraftEditingId = null;
+
+function draftKey(editingId) {
+  const uid = currentUser ? currentUser.id : 'anon';
+  return `draft_${uid}_${editingId || 'new'}`;
+}
+
+function loadDraft(editingId) {
+  try {
+    const raw = localStorage.getItem(draftKey(editingId));
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function clearDraft(editingId) {
+  try { localStorage.removeItem(draftKey(editingId)); } catch (e) {}
+}
+function hasDraft(editingId) {
+  try { return !!localStorage.getItem(draftKey(editingId)); } catch (e) { return false; }
+}
+
+// ==================== 渲染头部 ====================
 const app = document.getElementById('app');
 if (localStorage.getItem('my_theme') === 'dark') document.body.classList.add('dark');
 
@@ -824,7 +943,6 @@ function currentUserAvatarHTML(size) {
 }
 
 function renderHeader() {
-  const nav = document.getElementById('mainNav');
   const r = currentRoute();
   const active = {
     '': r === '' ? 'active' : '',
@@ -832,6 +950,8 @@ function renderHeader() {
     'collections': r === 'collections' ? 'active' : '',
     'me': r === 'me' ? 'active' : '',
   };
+
+  const nav = document.getElementById('mainNav');
   nav.innerHTML = `
     <a href="#/" class="${active['']}">首页</a>
     <a href="#/tags" class="${active['tags']}">标签</a>
@@ -870,6 +990,36 @@ function renderHeader() {
     const nb = document.getElementById('notifNavBtn');
     if (nb) { nb.style.borderColor = 'var(--primary)'; nb.style.color = 'var(--primary)'; }
   }
+
+  // 移动端底部导航
+  const mobileNav = document.getElementById('mobileNav');
+  const mActive = {
+    '': r === '' ? 'active' : '',
+    'tags': r === 'tags' ? 'active' : '',
+    'collections': r === 'collections' ? 'active' : '',
+    'write': (r === 'write' || r === 'edit') ? 'active' : '',
+    'me': r === 'me' ? 'active' : '',
+  };
+  const meLink = currentUser ? '#/me' : '#/login';
+  mobileNav.innerHTML = `
+    <div class="mobile-nav-inner">
+      <a href="#/" class="${mActive['']}">
+        <span class="mnav-icon">🏠</span><span>首页</span>
+      </a>
+      <a href="#/tags" class="${mActive['tags']}">
+        <span class="mnav-icon">🏷️</span><span>标签</span>
+      </a>
+      <a href="#/write" class="mnav-write ${mActive['write']}">
+        <span class="mnav-icon">✏️</span><span>写</span>
+      </a>
+      <a href="#/collections" class="${mActive['collections']}">
+        <span class="mnav-icon">📚</span><span>合集</span>
+      </a>
+      <a href="${meLink}" class="${mActive['me']}">
+        <span class="mnav-icon">👤</span><span>我的</span>
+      </a>
+    </div>
+  `;
 }
 
 function updateThemeBtn() {
@@ -1844,6 +1994,7 @@ function renderPost(id) {
   const isMine = currentUser && String(p.userId) === String(currentUser.id);
   const coll = p.collectionId ? collections.find(c => c.id === p.collectionId) : null;
   const collBtnText = coll ? '📚 更换合集' : '📚 加入合集';
+  const currentName = displayName();
 
   const collHTML = coll
     ? `<a href="#/collection/${coll.id}" style="display:inline-block;margin-top:20px;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text-2);font-size:14px;">
@@ -1851,11 +2002,26 @@ function renderPost(id) {
       </a>` : '';
 
   const commentsHTML = p.comments.length
-    ? p.comments.map(c => `
-        <div class="comment-item">
-          <div class="c-author">${avatarHTML(c.author, 18, 'avatar-sm')} ${escapeHTML(c.author)} · ${c.date}</div>
-          <div class="c-content">${escapeHTML(c.content)}</div>
-        </div>`).join('')
+    ? p.comments.map(c => {
+        const canEdit = currentUser && c.author === currentName;
+        const actions = canEdit ? `
+          <div class="c-actions">
+            <span class="edit" data-action="edit" data-cid="${c.id}">编辑</span>
+            <span class="del" data-action="del" data-cid="${c.id}">删除</span>
+          </div>` : '';
+        return `
+          <div class="comment-item" data-cid="${c.id}">
+            <div class="c-head">
+              ${avatarHTML(c.author, 18, 'avatar-sm')}
+              <span class="c-author-name">${escapeHTML(c.author)}</span>
+              <span>· ${c.date}</span>
+              ${actions}
+            </div>
+            <div class="c-content">${escapeHTML(c.content)}</div>
+            <div class="c-edit-row" style="display:none;"></div>
+          </div>
+        `;
+      }).join('')
     : `<p style="color:var(--text-3);font-size:14px;">还没有评论，来说两句吧</p>`;
 
   const commentForm = currentUser
@@ -1867,7 +2033,6 @@ function renderPost(id) {
 
   const authorAvatar = avatarHTML(p.author, 40);
 
-  // 内容展示：HTML 用 innerHTML（先 sanitize），纯文本用 escapeHTML
   const contentDisplay = looksLikeHTML(p.content)
     ? sanitizeHTML(p.content)
     : escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>');
@@ -1898,7 +2063,7 @@ function renderPost(id) {
 
       <div class="comments">
         <h2 style="margin-top:0;">评论 (${p.comments.length})</h2>
-        <div>${commentsHTML}</div>
+        <div id="commentList">${commentsHTML}</div>
         ${commentForm}
       </div>
     </div>
@@ -1941,13 +2106,71 @@ function renderPost(id) {
     });
   }
 
+  // 评论编辑 / 删除事件委托
+  const commentList = document.getElementById('commentList');
+  if (commentList) {
+    commentList.addEventListener('click', async (e) => {
+      const span = e.target.closest('span[data-action]');
+      if (!span) return;
+      const action = span.dataset.action;
+      const cid = Number(span.dataset.cid);
+      const idx = p.comments.findIndex(c => c.id === cid);
+      if (idx === -1) return;
+      const c = p.comments[idx];
+      if (c.author !== currentName) return;
+
+      if (action === 'del') {
+        if (!confirm('确定删除这条评论吗？')) return;
+        p.comments.splice(idx, 1);
+        renderPost(p.id);
+        await syncPost(p);
+      } else if (action === 'edit') {
+        const item = commentList.querySelector(`.comment-item[data-cid="${cid}"]`);
+        if (!item) return;
+        const viewRow = item.querySelector('.c-content');
+        const editRow = item.querySelector('.c-edit-row');
+        const oldContent = c.content;
+        viewRow.style.display = 'none';
+        editRow.style.display = 'flex';
+        editRow.className = 'c-edit-row comment-edit-row';
+        editRow.innerHTML = `
+          <input type="text" value="${escapeHTML(oldContent)}" />
+          <button class="save-btn">保存</button>
+          <button class="cancel-btn">取消</button>
+        `;
+        const input = editRow.querySelector('input');
+        input.focus();
+        try { input.setSelectionRange(input.value.length, input.value.length); } catch (err) {}
+
+        const cancel = () => {
+          viewRow.style.display = '';
+          editRow.style.display = 'none';
+          editRow.innerHTML = '';
+        };
+        const save = async () => {
+          const newVal = input.value.trim();
+          if (!newVal) { alert('评论不能为空'); return; }
+          c.content = newVal;
+          renderPost(p.id);
+          await syncPost(p);
+        };
+        editRow.querySelector('.cancel-btn').addEventListener('click', cancel);
+        editRow.querySelector('.save-btn').addEventListener('click', save);
+        input.addEventListener('keydown', ev => {
+          if (ev.key === 'Enter') save();
+          else if (ev.key === 'Escape') cancel();
+        });
+      }
+    });
+  }
+
   const cBtn = document.getElementById('commentBtn');
   if (cBtn) {
     const doComment = async () => {
       const input = document.getElementById('commentInput');
       const content = input.value.trim();
       if (!content) return;
-      p.comments.push({ id: Date.now(), author: displayName(), content, date: new Date().toISOString().slice(0, 10) });
+      p.comments.push({ id: Date.now(), author: currentName, content, date: new Date().toISOString().slice(0, 10) });
       if (p.userId && currentUser) {
         await createNotification({
           userId: p.userId, type: 'comment',
@@ -1962,7 +2185,7 @@ function renderPost(id) {
   }
 }
 
-/* ============ 写 / 编辑文章（Quill） ============ */
+/* ============ 写 / 编辑文章（Quill + 草稿） ============ */
 let selectedTags = [];
 let coverData = null;
 let quillEditor = null;
@@ -1976,22 +2199,16 @@ function selectLocalImage() {
     const file = input.files[0];
     if (!file) return;
     try {
-      // 在光标处显示"上传中"提示
       const range = quillEditor.getSelection(true);
       quillEditor.insertText(range.index, '（图片上传中…）');
       quillEditor.setSelection(range.index + 9);
-
       const url = await uploadImage(file);
-
-      // 删除提示文字
       quillEditor.deleteText(range.index, 9);
-      // 插入图片
       quillEditor.insertEmbed(range.index, 'image', url);
       quillEditor.setSelection(range.index + 1);
     } catch (err) {
       console.error(err);
       alert('图片上传失败：' + (err.message || '请重试'));
-      // 尝试清理提示文字
       try {
         const r = quillEditor.getSelection();
         if (r) quillEditor.deleteText(r.index - 9, 9);
@@ -2008,6 +2225,9 @@ function renderWrite(editId) {
     return;
   }
 
+  currentDraftEditingId = editing ? editing.id : null;
+  currentDraftKey = draftKey(currentDraftEditingId);
+
   selectedTags = editing ? editing.tags.slice() : [];
   coverData = null;
 
@@ -2022,6 +2242,7 @@ function renderWrite(editId) {
         const slug = el.dataset.slug;
         if (selectedTags.includes(slug)) { selectedTags = selectedTags.filter(s => s !== slug); el.classList.remove('active'); }
         else { selectedTags.push(slug); el.classList.add('active'); }
+        scheduleAutosave();
       });
     });
   }
@@ -2035,8 +2256,10 @@ function renderWrite(editId) {
   app.innerHTML = `
     <div class="container">
       <a class="back" href="${editing ? '#/post/' + editing.id : '#/'}">← 返回</a>
-      <h1>${editing ? '编辑文章' : '写文章'}</h1>
+      <h1>${editing ? '编辑文章' : '写文章'}<span class="draft-status" id="draftStatus"></span></h1>
       <p class="sub">${editing ? '修改后点保存' : '发布后会以「' + escapeHTML(displayName()) + '」的身份出现'}</p>
+
+      <div id="draftBannerWrap"></div>
 
       <div class="form-group">
         <label>标题</label>
@@ -2077,6 +2300,7 @@ function renderWrite(editId) {
       </div>
 
       <button class="submit-btn" id="submitBtn">${editing ? '保存修改' : '发布'}</button>
+      <button class="btn-secondary" id="clearDraftBtn">清空草稿</button>
     </div>
   `;
 
@@ -2095,14 +2319,11 @@ function renderWrite(editId) {
           ['link', 'image'],
           ['clean'],
         ],
-        handlers: {
-          image: () => selectLocalImage(),
-        },
+        handlers: { image: () => selectLocalImage() },
       },
     },
   });
 
-  // 加载已有内容
   if (editing) {
     if (looksLikeHTML(editing.content)) {
       quillEditor.clipboard.dangerouslyPasteHTML(editing.content);
@@ -2112,6 +2333,93 @@ function renderWrite(editId) {
   }
 
   bindTagChoiceEvents();
+
+  // 检查草稿
+  const draft = loadDraft(currentDraftEditingId);
+  const hasExistingDraft = !!draft;
+  // 判断草稿是否与原文/当前不同（如果只是刚进入还没动过，不提示）
+  if (hasExistingDraft) {
+    const bannerWrap = document.getElementById('draftBannerWrap');
+    const t = formatRelativeTime(draft.savedAt);
+    bannerWrap.innerHTML = `
+      <div class="draft-banner">
+        <div class="draft-msg">📝 检测到未发布的草稿（保存于 ${t}）</div>
+        <button class="restore-btn" id="restoreDraftBtn">恢复草稿</button>
+        <button class="discard-btn" id="discardDraftBtn">丢弃</button>
+      </div>
+    `;
+    document.getElementById('restoreDraftBtn').addEventListener('click', () => {
+      // 恢复
+      if (draft.title !== undefined) document.getElementById('title').value = draft.title;
+      if (draft.content !== undefined) {
+        quillEditor.root.innerHTML = draft.content;
+      }
+      if (draft.tags) {
+        selectedTags = draft.tags.slice();
+        const container = document.getElementById('tagChoices');
+        container.innerHTML = tagChoicesHTML();
+        bindTagChoiceEvents();
+      }
+      if (draft.cover) {
+        coverData = draft.cover;
+        document.getElementById('uploadBox').innerHTML = `<img src="${coverData}" alt="封面预览" />`;
+      }
+      if (draft.collectionId !== undefined) {
+        const sel = document.getElementById('collSelect');
+        sel.value = draft.collectionId ? String(draft.collectionId) : '';
+      }
+      bannerWrap.innerHTML = '';
+      showSync('草稿已恢复');
+    });
+    document.getElementById('discardDraftBtn').addEventListener('click', () => {
+      if (!confirm('丢弃草稿后就找不回了，确定？')) return;
+      clearDraft(currentDraftEditingId);
+      bannerWrap.innerHTML = '';
+      showSync('草稿已丢弃');
+    });
+  }
+
+  // ============ 自动保存草稿 ============
+  function doAutosave() {
+    if (!currentUser) return;
+    const titleVal = document.getElementById('title').value;
+    const contentHTML = quillEditor.root.innerHTML;
+    const collVal = document.getElementById('collSelect').value;
+    const draftData = {
+      title: titleVal,
+      content: contentHTML,
+      tags: selectedTags.slice(),
+      cover: coverData,
+      collectionId: collVal ? Number(collVal) : null,
+      savedAt: new Date().toISOString(),
+    };
+    // 如果全是空的就不存
+    const contentText = extractTextFromHTML(contentHTML);
+    if (!titleVal.trim() && !contentText) {
+      try { localStorage.removeItem(currentDraftKey); } catch (e) {}
+      return;
+    }
+    try {
+      localStorage.setItem(currentDraftKey, JSON.stringify(draftData));
+      const st = document.getElementById('draftStatus');
+      if (st) st.textContent = '· 已自动保存 ' + new Date().toLocaleTimeString().slice(0, 5);
+    } catch (e) {
+      console.warn('草稿保存失败（可能是空间满了）', e);
+    }
+  }
+
+  function scheduleAutosave() {
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(doAutosave, 800);
+  }
+
+  quillEditor.on('text-change', scheduleAutosave);
+  document.getElementById('title').addEventListener('input', scheduleAutosave);
+  document.getElementById('collSelect').addEventListener('change', scheduleAutosave);
+
+  // 离开页面时立即保存一次
+  const beforeUnloadHandler = () => { doAutosave(); };
+  window.addEventListener('beforeunload', beforeUnloadHandler);
 
   const newTagInput = document.getElementById('newTagInput');
   const addTagBtn = document.getElementById('addTagBtn');
@@ -2126,6 +2434,7 @@ function renderWrite(editId) {
       container.innerHTML = tagChoicesHTML();
       bindTagChoiceEvents();
       newTagInput.value = '';
+      scheduleAutosave();
     } catch (err) {
       console.error(err);
       alert('创建标签失败：' + (err.message || '请重试'));
@@ -2147,11 +2456,19 @@ function renderWrite(editId) {
     try {
       coverData = await uploadImage(file);
       uploadBox.innerHTML = `<img src="${coverData}" alt="封面预览" />`;
+      scheduleAutosave();
     } catch (err) {
       console.error(err);
       uploadBox.innerHTML = '<div class="hint">上传失败：' + escapeHTML(err.message || '请重试') + '</div>';
       coverData = null;
     }
+  });
+
+  // 清空草稿按钮
+  document.getElementById('clearDraftBtn').addEventListener('click', () => {
+    if (!confirm('清空当前编辑内容并删除草稿？')) return;
+    clearDraft(currentDraftEditingId);
+    location.hash = currentDraftEditingId ? ('#/post/' + currentDraftEditingId) : '#/';
   });
 
   document.getElementById('submitBtn').addEventListener('click', async () => {
@@ -2176,6 +2493,8 @@ function renderWrite(editId) {
       editing.collectionId = collectionId;
       if (coverData) editing.cover = coverData;
       await syncPost(editing);
+      clearDraft(currentDraftEditingId);
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
       location.hash = '#/post/' + editing.id;
     } else {
       const newId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
@@ -2193,6 +2512,8 @@ function renderWrite(editId) {
       };
       posts.push(newPost);
       await syncPost(newPost);
+      clearDraft(null);
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
       location.hash = '#/post/' + newId;
     }
   });
@@ -2201,10 +2522,17 @@ function renderWrite(editId) {
 /* ============ 路由 ============ */
 function router() {
   if (!loaded) return;
-  renderHeader();
 
+  // 离开写页面时清掉草稿 key 引用
   const hash = location.hash || '#/';
   const parts = hash.slice(2).split('/');
+  if (parts[0] !== 'write' && parts[0] !== 'edit') {
+    currentDraftKey = null;
+    currentDraftEditingId = null;
+    clearTimeout(autosaveTimer);
+  }
+
+  renderHeader();
 
   if (parts[0] !== 'search') searchVisible = PAGE_SIZE;
   if (parts[0] !== '') homeVisible = PAGE_SIZE;
@@ -2245,15 +2573,4 @@ async function init() {
       <div class="container">
         <div class="empty">
           <p style="color:#e33;font-size:16px;margin-bottom:12px;">连接数据库失败</p>
-          <p style="font-size:13px;color:var(--text-3);">${escapeHTML(e.message || e)}</p>
-        </div>
-      </div>`;
-  }
-}
-
-window.addEventListener('hashchange', router);
-init();
-</script>
-
-</body>
-</html>
+          <p style="font-size:13px;color:var
