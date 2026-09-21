@@ -194,12 +194,126 @@
   .upload-box:hover { border-color: var(--primary); }
   .upload-box img { max-width: 100%; max-height: 260px; border-radius: 8px; }
   .upload-box .hint { color: var(--text-3); font-size: 14px; }
-  .post-cover { width: 100%; border-radius: 12px; margin-bottom: 20px; }
+  .post-cover { width: 100%; border-radius: 12px; margin-bottom: 20px; cursor: zoom-in; }
+
+  /* ============ 文章布局 + 目录 ============ */
+  .post-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  .post-main { flex: 1; min-width: 0; }
+  .toc-sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 90px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  .toc-title {
+    font-weight: 600;
+    color: var(--text-2);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .toc-list { list-style: none; }
+  .toc-item {
+    padding: 5px 8px;
+    border-radius: 6px;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1.4;
+    border-left: 2px solid transparent;
+  }
+  .toc-item:hover { background: var(--hover-bg); color: var(--primary); }
+  .toc-item.active {
+    color: var(--primary);
+    background: rgba(255,92,92,.08);
+    border-left-color: var(--primary);
+    font-weight: 500;
+  }
+  .toc-item.toc-h2 { padding-left: 8px; }
+  .toc-item.toc-h3 { padding-left: 22px; font-size: 12px; }
+  .toc-item.toc-h4 { padding-left: 34px; font-size: 12px; color: var(--text-3); }
+  .toc-empty { color: var(--text-3); font-size: 12px; }
+
+  /* 移动端目录变成顶部按钮 + 抽屉 */
+  .toc-mobile-btn {
+    display: none;
+    padding: 10px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    margin-bottom: 16px;
+    font-family: inherit;
+  }
+  .toc-mobile-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* ============ 图片灯箱 ============ */
+  .lightbox {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.92);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px;
+    cursor: zoom-out;
+    animation: lbFadeIn .2s ease;
+  }
+  @keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    cursor: default;
+    animation: lbZoomIn .25s ease;
+  }
+  @keyframes lbZoomIn {
+    from { transform: scale(.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .lightbox-close {
+    position: absolute; top: 20px; right: 20px;
+    background: rgba(255,255,255,.15);
+    border: none;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    color: #fff; font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+  }
+  .lightbox-close:hover { background: rgba(255,255,255,.3); }
+  .lightbox-hint {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,.5); font-size: 13px;
+    pointer-events: none;
+  }
+
   .post-content { font-size: 16px; color: var(--text-2); line-height: 1.75; }
-  .post-content h1, .post-content h2, .post-content h3 { margin: 20px 0 10px; color: var(--text); }
+  .post-content h1, .post-content h2, .post-content h3, .post-content h4 {
+    margin: 20px 0 10px; color: var(--text);
+    scroll-margin-top: 90px;
+  }
   .post-content h1 { font-size: 24px; }
   .post-content h2 { font-size: 20px; }
   .post-content h3 { font-size: 17px; }
+  .post-content h4 { font-size: 16px; }
   .post-content blockquote {
     border-left: 3px solid var(--primary); padding-left: 16px;
     color: var(--text-2); margin: 14px 0; font-style: italic;
@@ -548,6 +662,10 @@
   body.dark .ql-snow .ql-tooltip { background: var(--card); border-color: var(--border); color: var(--text); }
   body.dark .ql-snow .ql-tooltip input[type=text] { background: var(--hover-bg); border-color: var(--border); color: var(--text); }
 
+  @media (max-width: 900px) {
+    .toc-sidebar { display: none; }
+    .toc-mobile-btn { display: inline-block; }
+  }
   @media (max-width: 768px) {
     body { padding-bottom: 68px; }
     .main-nav { display: none; }
@@ -586,28 +704,18 @@ const SUPABASE_KEY = 'sb_publishable_-uNERFSmoVIUo1j4DO6cPw_9zpCGKwZ';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ==================== 敏感词库 ====================
-// 这是一个示例词库，你需要根据自己社区的性质自行扩充。
-// 只放一些通用的广告词、脏话示例，不涉及具体行业和地区。
 const SENSITIVE_WORDS = [
-  // 广告类
   '加微信', '加vx', '加VX', '加qq', '加QQ', '扫码加', '私聊我', '私信我',
   '出售', '代购', '刷单', '兼职', '日入', '月入过万', '躺赚', '返利',
   '点击链接', '点击领取', '免费领取', '领取红包', '优惠券群',
-  // 联系方式类
   'V信', '威信', 'weixin', '微信：', 'QQ：', 'Q群',
-  // 通用脏话（示例，自行扩充）
   '傻逼', '煞笔', '沙比', '草泥马', '操你', '日你',
-  // 你需要自己加更多
 ];
-
-// 简短显示敏感词（中间打码）
 function maskWord(w) {
   if (!w || w.length <= 1) return w;
   if (w.length === 2) return w[0] + '*';
   return w[0] + '*'.repeat(w.length - 2) + w[w.length - 1];
 }
-
-// 检查文本，返回 { ok: bool, hits: string[] }
 function checkContent(text) {
   if (!text) return { ok: true, hits: [] };
   const lower = String(text).toLowerCase();
@@ -617,15 +725,13 @@ function checkContent(text) {
   }
   return { ok: hits.length === 0, hits };
 }
-
-// 显示拦截提示
 function showSensitiveError(hits) {
   const masked = hits.slice(0, 5).map(maskWord).join('、');
   const extra = hits.length > 5 ? ' 等 ' + hits.length + ' 处' : '';
   alert('内容包含不允许的词汇：' + masked + extra + '\n\n请修改后再试。');
 }
 
-// ==================== 实时通知（轮询） ====================
+// ==================== 实时通知 ====================
 const POLL_INTERVAL = 30000;
 let pollTimer = null;
 let pollPaused = false;
@@ -635,9 +741,7 @@ function startPolling() {
   if (!currentUser) return;
   pollTimer = setInterval(checkNewNotifications, POLL_INTERVAL);
 }
-function stopPolling() {
-  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-}
+function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 async function checkNewNotifications() {
   if (!currentUser || !loaded || pollPaused) return;
   try {
@@ -645,9 +749,8 @@ async function checkNewNotifications() {
     const { count, error } = await supabase
       .from('notifications')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', uid)
-      .eq('is_read', false);
-    if (error) { console.warn('轮询失败', error); return; }
+      .eq('user_id', uid).eq('is_read', false);
+    if (error) return;
     const newCount = count || 0;
     if (newCount > myUnreadCount) {
       const diff = newCount - myUnreadCount;
@@ -655,24 +758,21 @@ async function checkNewNotifications() {
       renderHeader();
       showNewNotifToast(diff);
       if (currentRoute() === 'notifications') {
-        await reloadNotifications();
-        renderNotifications();
+        await reloadNotifications(); renderNotifications();
       } else {
         reloadNotifications().catch(() => {});
       }
     } else if (newCount < myUnreadCount) {
-      myUnreadCount = newCount;
-      renderHeader();
+      myUnreadCount = newCount; renderHeader();
     }
-  } catch (e) { console.warn('轮询异常', e); }
+  } catch (e) {}
 }
 async function reloadNotifications() {
   if (!currentUser) return;
   const uid = String(currentUser.id);
   const { data, error } = await supabase.from('notifications')
     .select('*').eq('user_id', uid)
-    .order('created_at', { ascending: false })
-    .limit(100);
+    .order('created_at', { ascending: false }).limit(100);
   if (error) return;
   myNotifications = (data || []).map(rowToNotif);
   myUnreadCount = myNotifications.filter(n => !n.isRead).length;
@@ -718,14 +818,9 @@ function extractTextFromHTML(html) {
 
 // ==================== 分页 ====================
 const PAGE_SIZE = 10;
-let homeVisible = PAGE_SIZE;
-let tagVisible = PAGE_SIZE;
-let collectionVisible = PAGE_SIZE;
-let meVisible = PAGE_SIZE;
-let meFavVisible = PAGE_SIZE;
-let searchVisible = PAGE_SIZE;
+let homeVisible = PAGE_SIZE, tagVisible = PAGE_SIZE, collectionVisible = PAGE_SIZE;
+let meVisible = PAGE_SIZE, meFavVisible = PAGE_SIZE, searchVisible = PAGE_SIZE;
 let notifVisible = 30;
-
 function loadMoreHTML(shown, total, extraHint) {
   if (shown >= total) {
     if (extraHint && total > 0) return `<div class="load-more-hint">— 已经到底了 —</div>`;
@@ -741,20 +836,17 @@ function bindLoadMore(cb) {
 // ==================== 用户 session ====================
 const KEY_USER = 'my_user';
 let currentUser = JSON.parse(localStorage.getItem(KEY_USER) || 'null');
-
 function saveUser(u) {
   if (u) localStorage.setItem(KEY_USER, JSON.stringify(u));
   else localStorage.removeItem(KEY_USER);
   currentUser = u;
 }
 function displayName() { return currentUser ? currentUser.displayName : '游客'; }
-
 async function hashPassword(password) {
   const data = new TextEncoder().encode(password + 'my-lof-salt-v1');
   const buf = await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
 async function registerUser(loginName, dispName, password) {
   const passwordHash = await hashPassword(password);
   const { data: existing } = await supabase.from('app_users').select('id').eq('login_name', loginName).maybeSingle();
@@ -775,16 +867,11 @@ async function loginUser(loginName, password) {
 }
 
 // ==================== 数据 ====================
-let posts = [];
-let collections = [];
-let loaded = false;
+let posts = [], collections = [], loaded = false;
 let followedTags = JSON.parse(localStorage.getItem('my_followed_tags') || '[]');
 let myLikes = JSON.parse(localStorage.getItem('my_likes') || '[]');
-let myFavorites = new Set();
-let followedAuthors = new Set();
-let myNotifications = [];
-let myUnreadCount = 0;
-let myReports = new Set(); // 记录"我举报过的" post id，避免重复弹窗
+let myFavorites = new Set(), followedAuthors = new Set();
+let myNotifications = [], myUnreadCount = 0, myReports = new Set();
 
 function saveFollows() { localStorage.setItem('my_followed_tags', JSON.stringify(followedTags)); }
 function saveLikes() { localStorage.setItem('my_likes', JSON.stringify(myLikes)); }
@@ -831,7 +918,6 @@ function rowToNotif(r) {
     content: r.content, isRead: r.is_read || false, createdAt: r.created_at,
   };
 }
-
 function rebuildUsersByName() {
   usersByName = {};
   allUsers.forEach(u => { usersByName[u.displayName] = u; });
@@ -844,8 +930,7 @@ async function loadAll() {
   if (cErr) throw cErr;
   const { data: tData, error: tErr } = await supabase.from('tags').select('*').order('id', { ascending: true });
   if (tErr) throw tErr;
-  const { data: uData, error: uErr } = await supabase
-    .from('app_users').select('id, login_name, display_name, avatar');
+  const { data: uData, error: uErr } = await supabase.from('app_users').select('id, login_name, display_name, avatar');
   if (uErr) throw uErr;
 
   posts = (pData || []).map(rowToPost);
@@ -856,11 +941,7 @@ async function loadAll() {
 
   if (currentUser) {
     const me = allUsers.find(u => String(u.id) === String(currentUser.id));
-    if (me) {
-      currentUser.avatar = me.avatar;
-      currentUser.displayName = me.displayName;
-      saveUser(currentUser);
-    }
+    if (me) { currentUser.avatar = me.avatar; currentUser.displayName = me.displayName; saveUser(currentUser); }
   }
 
   posts.forEach(p => {
@@ -873,47 +954,33 @@ async function loadAll() {
     myFavorites = new Set((fData || []).map(r => r.post_id));
     const { data: aData } = await supabase.from('author_follows').select('followee_name').eq('follower_id', uid);
     followedAuthors = new Set((aData || []).map(r => r.followee_name));
-    const { data: nData } = await supabase.from('notifications')
-      .select('*').eq('user_id', uid)
-      .order('created_at', { ascending: false })
-      .limit(100);
+    const { data: nData } = await supabase.from('notifications').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(100);
     myNotifications = (nData || []).map(rowToNotif);
     myUnreadCount = myNotifications.filter(n => !n.isRead).length;
-    // 我举报过的
     const { data: rData } = await supabase.from('reports').select('post_id').eq('reporter_id', uid);
     myReports = new Set((rData || []).map(r => r.post_id));
   } else {
-    myFavorites = new Set();
-    followedAuthors = new Set();
-    myNotifications = [];
-    myUnreadCount = 0;
-    myReports = new Set();
+    myFavorites = new Set(); followedAuthors = new Set();
+    myNotifications = []; myUnreadCount = 0; myReports = new Set();
   }
-
   loaded = true;
 }
 
 async function createNotification({ userId, type, postId, postTitle, content }) {
-  if (!currentUser) return;
-  if (!userId) return;
+  if (!currentUser || !userId) return;
   if (String(userId) === String(currentUser.id)) return;
-  const { error } = await supabase.from('notifications').insert({
+  await supabase.from('notifications').insert({
     user_id: String(userId), actor_name: displayName(), type,
     post_id: postId || null, post_title: postTitle || null, content: content || null,
   });
-  if (error) console.error('通知创建失败：', error);
 }
-
 function findUserIdByName(name) {
-  const u = usersByName[name];
-  return u ? u.id : null;
+  const u = usersByName[name]; return u ? u.id : null;
 }
-
 function formatRelativeTime(isoStr) {
   if (!isoStr) return '';
   const t = new Date(isoStr).getTime();
-  const now = Date.now();
-  const diff = Math.floor((now - t) / 1000);
+  const diff = Math.floor((Date.now() - t) / 1000);
   if (diff < 60) return '刚刚';
   if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
   if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
@@ -939,14 +1006,12 @@ async function createTag(name) {
     }
     throw error;
   }
-  const newTag = rowToTag(data);
-  tags.push(newTag);
-  return newTag;
+  const newTag = rowToTag(data); tags.push(newTag); return newTag;
 }
 
 async function syncPost(p) {
   const { error } = await supabase.from('posts').upsert(postToRow(p));
-  if (error) { showSync('同步失败：' + error.message, true); console.error(error); return false; }
+  if (error) { showSync('同步失败：' + error.message, true); return false; }
   showSync('已同步'); return true;
 }
 async function removePost(p) {
@@ -964,7 +1029,6 @@ async function removeColl(c) {
   if (error) { showSync('删除失败：' + error.message, true); return false; }
   showSync('已删除'); return true;
 }
-
 async function toggleFavorite(postId) {
   if (!currentUser) return;
   const uid = String(currentUser.id);
@@ -977,12 +1041,9 @@ async function toggleFavorite(postId) {
     await supabase.from('favorites').insert({ user_id: uid, post_id: postId });
     showSync('已收藏');
     const p = posts.find(x => x.id === postId);
-    if (p && p.userId) {
-      await createNotification({ userId: p.userId, type: 'favorite', postId: p.id, postTitle: p.title });
-    }
+    if (p && p.userId) await createNotification({ userId: p.userId, type: 'favorite', postId: p.id, postTitle: p.title });
   }
 }
-
 async function toggleFollowAuthor(name) {
   if (!currentUser) return;
   const uid = String(currentUser.id);
@@ -998,56 +1059,169 @@ async function toggleFollowAuthor(name) {
     if (targetId) await createNotification({ userId: targetId, type: 'follow' });
   }
 }
-
-// 举报
 async function submitReport(post, reason) {
   if (!currentUser) return;
   const uid = String(currentUser.id);
   const { error } = await supabase.from('reports').insert({
-    reporter_id: uid,
-    reporter_name: displayName(),
-    post_id: post.id,
-    post_title: post.title,
-    post_author: post.author,
-    reason: reason,
+    reporter_id: uid, reporter_name: displayName(),
+    post_id: post.id, post_title: post.title, post_author: post.author, reason,
   });
   if (error) {
-    if (/duplicate|unique/i.test(error.message)) {
-      throw new Error('你已经举报过这篇文章了');
-    }
+    if (/duplicate|unique/i.test(error.message)) throw new Error('你已经举报过这篇文章了');
     throw error;
   }
   myReports.add(post.id);
 }
 
 // ==================== 草稿 ====================
-let autosaveTimer = null;
-let currentDraftKey = null;
-let currentDraftEditingId = null;
-
+let autosaveTimer = null, currentDraftKey = null, currentDraftEditingId = null;
 function draftKey(editingId) {
   const uid = currentUser ? currentUser.id : 'anon';
   return `draft_${uid}_${editingId || 'new'}`;
 }
 function loadDraft(editingId) {
-  try {
-    const raw = localStorage.getItem(draftKey(editingId));
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
+  try { const raw = localStorage.getItem(draftKey(editingId)); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
 }
 function clearDraft(editingId) {
   try { localStorage.removeItem(draftKey(editingId)); } catch (e) {}
 }
 
+// ==================== 图片灯箱 ====================
+function openLightbox(imgSrc) {
+  // 移除已有的
+  document.querySelectorAll('.lightbox').forEach(el => el.remove());
+  const lb = document.createElement('div');
+  lb.className = 'lightbox';
+  lb.innerHTML = `
+    <button class="lightbox-close" title="关闭">✕</button>
+    <img src="${imgSrc}" alt="" />
+    <div class="lightbox-hint">点击空白处或按 ESC 关闭</div>
+  `;
+  document.body.appendChild(lb);
+  document.body.style.overflow = 'hidden';
+  const close = () => {
+    lb.remove();
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', escHandler);
+  };
+  lb.addEventListener('click', (e) => {
+    if (e.target === lb || e.target.classList.contains('lightbox-close')) close();
+  });
+  const escHandler = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', escHandler);
+}
+
+// ==================== 文章目录 ====================
+function buildTOC() {
+  const content = document.querySelector('.post-content');
+  if (!content) return;
+
+  // 收集 h1-h4
+  const headings = content.querySelectorAll('h1, h2, h3, h4');
+  if (headings.length < 2) return; // 太少不显示
+
+  const tocList = [];
+  const usedIds = new Set();
+  headings.forEach((h, i) => {
+    // 生成 id（去重）
+    let baseId = 'heading-' + i;
+    let id = baseId;
+    let n = 0;
+    while (usedIds.has(id)) { n++; id = baseId + '-' + n; }
+    usedIds.add(id);
+    h.id = id;
+    const level = parseInt(h.tagName.substring(1), 10); // 1-4
+    tocList.push({ id, level, text: h.textContent.trim() });
+  });
+
+  // 桌面端侧边栏
+  const sidebar = document.getElementById('tocSidebar');
+  if (sidebar) {
+    sidebar.innerHTML = `
+      <div class="toc-title">📖 目录</div>
+      <ul class="toc-list">
+        ${tocList.map(t => `<li class="toc-item toc-h${t.level}" data-target="${t.id}">${escapeHTML(t.text)}</li>`).join('')}
+      </ul>
+    `;
+    sidebar.style.display = 'block';
+    sidebar.querySelectorAll('.toc-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const target = document.getElementById(el.dataset.target);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  // 移动端按钮（点击后滚动到侧边栏目录？不，直接生成一个抽屉？这里简化为直接显示为一个列表弹窗）
+  const mobileBtn = document.getElementById('tocMobileBtn');
+  if (mobileBtn) {
+    mobileBtn.style.display = 'inline-block';
+    mobileBtn.textContent = `📖 目录 (${tocList.length})`;
+    mobileBtn.addEventListener('click', () => {
+      const modal = document.createElement('div');
+      modal.className = 'modal-mask';
+      modal.innerHTML = `
+        <div class="modal">
+          <h3>目录</h3>
+          <ul class="toc-list" style="margin-top:12px;">
+            ${tocList.map(t => `<li class="toc-item toc-h${t.level}" data-target="${t.id}" style="cursor:pointer;">${escapeHTML(t.text)}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+      modal.querySelectorAll('.toc-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const target = document.getElementById(el.dataset.target);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          modal.remove();
+        });
+      });
+    });
+  }
+
+  // 滚动高亮
+  let scrollListener = null;
+  const updateActive = () => {
+    let current = null;
+    const headerOffset = 100;
+    for (const t of tocList) {
+      const el = document.getElementById(t.id);
+      if (!el) continue;
+      const top = el.getBoundingClientRect().top;
+      if (top - headerOffset <= 0) current = t.id;
+      else break;
+    }
+    document.querySelectorAll('.toc-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.target === current);
+    });
+  };
+  scrollListener = () => { requestAnimationFrame(updateActive); };
+  window.addEventListener('scroll', scrollListener, { passive: true });
+  updateActive();
+
+  // 页面切换时清理
+  window.__tocCleanup = () => {
+    if (scrollListener) window.removeEventListener('scroll', scrollListener);
+    window.__tocCleanup = null;
+  };
+}
+
+function cleanupTOC() {
+  if (window.__tocCleanup) window.__tocCleanup();
+}
+
 // ==================== 渲染头部 ====================
 const app = document.getElementById('app');
+let allUsers = [];
+let usersByName = {};
+let tags = [];
 if (localStorage.getItem('my_theme') === 'dark') document.body.classList.add('dark');
 
 function currentRoute() {
   const hash = location.hash || '#/';
   return hash.slice(2).split('/')[0] || '';
 }
-
 function avatarURL(name) {
   const u = usersByName[name];
   return u && u.avatar ? u.avatar : null;
@@ -1065,9 +1239,7 @@ function avatarHTML(name, size, cls) {
 function currentUserAvatarHTML(size) {
   size = size || 28;
   if (!currentUser) return '';
-  if (currentUser.avatar) {
-    return `<img class="avatar" src="${currentUser.avatar}" alt="" style="width:${size}px;height:${size}px;" />`;
-  }
+  if (currentUser.avatar) return `<img class="avatar" src="${currentUser.avatar}" alt="" style="width:${size}px;height:${size}px;" />`;
   return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.45)}px;">${escapeHTML(displayName()[0])}</div>`;
 }
 
@@ -1079,7 +1251,6 @@ function renderHeader() {
     'collections': r === 'collections' ? 'active' : '',
     'me': r === 'me' ? 'active' : '',
   };
-
   const nav = document.getElementById('mainNav');
   nav.innerHTML = `
     <a href="#/" class="${active['']}">首页</a>
@@ -1096,10 +1267,7 @@ function renderHeader() {
   const themeBtn = `<button class="icon-btn" id="themeBtn" title="切换深色模式">🌙</button>`;
   const writeBtn = `<a href="#/write" class="write-btn">✏️ 写文章</a>`;
   const userArea = currentUser
-    ? `<a href="#/me" class="user-chip" id="userChip">
-         ${currentUserAvatarHTML(28)}
-         <span>${escapeHTML(displayName())}</span>
-       </a>`
+    ? `<a href="#/me" class="user-chip" id="userChip">${currentUserAvatarHTML(28)}<span>${escapeHTML(displayName())}</span></a>`
     : `<a href="#/login" class="mini-btn">登录</a>`;
 
   right.innerHTML = searchBtn + notifBtn + themeBtn + writeBtn + userArea;
@@ -1111,19 +1279,12 @@ function renderHeader() {
   });
   updateThemeBtn();
 
-  if (r === 'search') {
-    const sb = document.getElementById('searchNavBtn');
-    if (sb) { sb.style.borderColor = 'var(--primary)'; sb.style.color = 'var(--primary)'; }
-  }
-  if (r === 'notifications') {
-    const nb = document.getElementById('notifNavBtn');
-    if (nb) { nb.style.borderColor = 'var(--primary)'; nb.style.color = 'var(--primary)'; }
-  }
+  if (r === 'search') { const sb = document.getElementById('searchNavBtn'); if (sb) { sb.style.borderColor = 'var(--primary)'; sb.style.color = 'var(--primary)'; } }
+  if (r === 'notifications') { const nb = document.getElementById('notifNavBtn'); if (nb) { nb.style.borderColor = 'var(--primary)'; nb.style.color = 'var(--primary)'; } }
 
   const mobileNav = document.getElementById('mobileNav');
   const mActive = {
-    '': r === '' ? 'active' : '',
-    'tags': r === 'tags' ? 'active' : '',
+    '': r === '' ? 'active' : '', 'tags': r === 'tags' ? 'active' : '',
     'collections': r === 'collections' ? 'active' : '',
     'write': (r === 'write' || r === 'edit') ? 'active' : '',
     'me': r === 'me' ? 'active' : '',
@@ -1131,21 +1292,11 @@ function renderHeader() {
   const meLink = currentUser ? '#/me' : '#/login';
   mobileNav.innerHTML = `
     <div class="mobile-nav-inner">
-      <a href="#/" class="${mActive['']}">
-        <span class="mnav-icon">🏠</span><span>首页</span>
-      </a>
-      <a href="#/tags" class="${mActive['tags']}">
-        <span class="mnav-icon">🏷️</span><span>标签</span>
-      </a>
-      <a href="#/write" class="mnav-write ${mActive['write']}">
-        <span class="mnav-icon">✏️</span><span>写</span>
-      </a>
-      <a href="#/collections" class="${mActive['collections']}">
-        <span class="mnav-icon">📚</span><span>合集</span>
-      </a>
-      <a href="${meLink}" class="${mActive['me']}">
-        <span class="mnav-icon">👤</span><span>我的</span>
-      </a>
+      <a href="#/" class="${mActive['']}"><span class="mnav-icon">🏠</span><span>首页</span></a>
+      <a href="#/tags" class="${mActive['tags']}"><span class="mnav-icon">🏷️</span><span>标签</span></a>
+      <a href="#/write" class="mnav-write ${mActive['write']}"><span class="mnav-icon">✏️</span><span>写</span></a>
+      <a href="#/collections" class="${mActive['collections']}"><span class="mnav-icon">📚</span><span>合集</span></a>
+      <a href="${meLink}" class="${mActive['me']}"><span class="mnav-icon">👤</span><span>我的</span></a>
     </div>
   `;
 }
@@ -1207,9 +1358,7 @@ function userCardHTML(name) {
   const avatarURLValue = u && u.avatar ? u.avatar : null;
   const postCount = posts.filter(p => p.author === name).length;
   const likes = posts.filter(p => p.author === name).reduce((s, p) => s + (p.likes || 0), 0);
-  const avatarBlock = avatarURLValue
-    ? `<img class="uc-avatar" src="${avatarURLValue}" alt="" />`
-    : `<div class="uc-avatar">${escapeHTML((name || '?')[0])}</div>`;
+  const avatarBlock = avatarURLValue ? `<img class="uc-avatar" src="${avatarURLValue}" alt="" />` : `<div class="uc-avatar">${escapeHTML((name || '?')[0])}</div>`;
   return `
     <a class="user-card" href="#/user/${encodeURIComponent(name)}">
       ${avatarBlock}
@@ -1222,9 +1371,7 @@ function userCardHTML(name) {
 }
 function requireLogin(msg = '请先登录') {
   if (currentUser) return true;
-  alert(msg);
-  location.hash = '#/login';
-  return false;
+  alert(msg); location.hash = '#/login'; return false;
 }
 
 /* ============ 图片上传 ============ */
@@ -1241,19 +1388,16 @@ function compressImageToBlob(file, maxWidth, quality) {
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('图片压缩失败')), 'image/jpeg', quality);
       };
-      img.onerror = reject;
-      img.src = e.target.result;
+      img.onerror = reject; img.src = e.target.result;
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    reader.onerror = reject; reader.readAsDataURL(file);
   });
 }
 async function uploadImage(file) {
   if (!currentUser) throw new Error('请先登录');
   const blob = await compressImageToBlob(file, 1200, 0.85);
   const filename = `user-${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-  const { data, error } = await supabase.storage
-    .from('images')
+  const { data, error } = await supabase.storage.from('images')
     .upload(filename, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
   if (error) throw error;
   const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(data.path);
@@ -1263,8 +1407,7 @@ async function uploadAvatar(file) { return await uploadImage(file); }
 async function saveAvatar(url) {
   const { error } = await supabase.from('app_users').update({ avatar: url }).eq('id', currentUser.id);
   if (error) throw error;
-  currentUser.avatar = url;
-  saveUser(currentUser);
+  currentUser.avatar = url; saveUser(currentUser);
   const me = allUsers.find(u => String(u.id) === String(currentUser.id));
   if (me) me.avatar = url;
   rebuildUsersByName();
@@ -1272,6 +1415,7 @@ async function saveAvatar(url) {
 
 /* ============ 登录 ============ */
 function renderLogin() {
+  cleanupTOC();
   app.innerHTML = `
     <div class="container">
       <div class="auth-card">
@@ -1302,8 +1446,7 @@ function renderLogin() {
     try {
       const user = await loginUser(loginName, password);
       saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name, avatar: user.avatar || null });
-      location.hash = '#/me';
-      location.reload();
+      location.hash = '#/me'; location.reload();
     } catch (e) {
       errBox.innerHTML = `<div class="auth-error">${escapeHTML(e.message)}</div>`;
       btn.disabled = false; btn.textContent = '登录';
@@ -1315,6 +1458,7 @@ function renderLogin() {
 
 /* ============ 注册 ============ */
 function renderRegister() {
+  cleanupTOC();
   app.innerHTML = `
     <div class="container">
       <div class="auth-card">
@@ -1348,21 +1492,14 @@ function renderRegister() {
     if (!displayNameVal) { errBox.innerHTML = '<div class="auth-error">请填写显示名</div>'; return; }
     if (!/^[a-z0-9_]{3,20}$/.test(loginNameVal)) { errBox.innerHTML = '<div class="auth-error">登录名只能是 3-20 位小写字母、数字或下划线</div>'; return; }
     if (password.length < 6) { errBox.innerHTML = '<div class="auth-error">密码至少 6 位</div>'; return; }
-
-    // 昵称审核
     const nameCheck = checkContent(displayNameVal);
-    if (!nameCheck.ok) {
-      errBox.innerHTML = `<div class="auth-error">昵称包含不允许的词汇，请换一个</div>`;
-      return;
-    }
-
+    if (!nameCheck.ok) { errBox.innerHTML = `<div class="auth-error">昵称包含不允许的词汇，请换一个</div>`; return; }
     const btn = document.getElementById('registerBtn');
     btn.disabled = true; btn.textContent = '注册中…';
     try {
       const user = await registerUser(loginNameVal, displayNameVal, password);
       saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name, avatar: null });
-      location.hash = '#/me';
-      location.reload();
+      location.hash = '#/me'; location.reload();
     } catch (e) {
       errBox.innerHTML = `<div class="auth-error">${escapeHTML(e.message)}</div>`;
       btn.disabled = false; btn.textContent = '注册';
@@ -1371,20 +1508,14 @@ function renderRegister() {
   document.getElementById('registerBtn').addEventListener('click', submit);
 }
 
-/* ============ 通知页面 ============ */
+/* ============ 通知 ============ */
 function renderNotifications() {
+  cleanupTOC();
   if (!requireLogin('请先登录')) return;
   if (myNotifications.length === 0) {
-    app.innerHTML = `
-      <div class="container">
-        <h1>通知</h1>
-        <p class="sub">别人给你点赞、评论、收藏、关注时，会出现在这里</p>
-        <p class="empty">还没有任何通知</p>
-      </div>
-    `;
+    app.innerHTML = `<div class="container"><h1>通知</h1><p class="sub">别人给你点赞、评论、收藏、关注时，会出现在这里</p><p class="empty">还没有任何通知</p></div>`;
     return;
   }
-
   const shown = myNotifications.slice(0, notifVisible);
   const listHTML = shown.map(n => {
     const time = formatRelativeTime(n.createdAt);
@@ -1394,7 +1525,6 @@ function renderNotifications() {
     else if (n.type === 'comment') { actionText = `评论了你的文章《${escapeHTML(n.postTitle || '')}》`; link = n.postId ? '#/post/' + n.postId : '#/'; }
     else if (n.type === 'favorite') { actionText = `收藏了你的文章《${escapeHTML(n.postTitle || '')}》`; link = n.postId ? '#/post/' + n.postId : '#/'; }
     else if (n.type === 'follow') { actionText = `关注了你`; link = '#/user/' + encodeURIComponent(n.actorName); }
-
     const unreadClass = n.isRead ? '' : 'unread';
     const dot = n.isRead ? '' : '<span class="notif-dot"></span>';
     return `
@@ -1408,7 +1538,6 @@ function renderNotifications() {
       </a>
     `;
   }).join('');
-
   const moreHTML = loadMoreHTML(notifVisible, myNotifications.length, true);
 
   app.innerHTML = `
@@ -1434,7 +1563,6 @@ function renderNotifications() {
       }
     });
   });
-
   const markBtn = document.getElementById('markAllReadBtn');
   if (markBtn) markBtn.addEventListener('click', async () => {
     const ids = myNotifications.filter(n => !n.isRead).map(n => n.id);
@@ -1442,18 +1570,15 @@ function renderNotifications() {
     myNotifications.forEach(n => n.isRead = true);
     myUnreadCount = 0;
     try { await supabase.from('notifications').update({ is_read: true }).in('id', ids); } catch (e) {}
-    renderHeader();
-    renderNotifications();
+    renderHeader(); renderNotifications();
   });
-
   bindLoadMore(() => { notifVisible += 30; renderNotifications(); });
 }
 
-/* ============ 搜索页 ============ */
-let searchKeyword = '';
-let searchTab = 'all';
-
+/* ============ 搜索 ============ */
+let searchKeyword = '', searchTab = 'all';
 function renderSearch() {
+  cleanupTOC();
   app.innerHTML = `
     <div class="container">
       <h1>搜索</h1>
@@ -1465,152 +1590,89 @@ function renderSearch() {
     </div>
   `;
   const input = document.getElementById('bigSearchInput');
-  input.value = searchKeyword;
-  input.focus();
+  input.value = searchKeyword; input.focus();
   try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
-  input.addEventListener('input', e => {
-    searchKeyword = e.target.value;
-    searchVisible = PAGE_SIZE;
-    updateSearchResults();
-  });
+  input.addEventListener('input', e => { searchKeyword = e.target.value; searchVisible = PAGE_SIZE; updateSearchResults(); });
   updateSearchResults();
 }
-
 function updateSearchResults() {
   const container = document.getElementById('searchResults');
   if (!container) return;
   const rawKw = searchKeyword.trim();
   const kw = rawKw.toLowerCase();
-
   if (!kw) {
-    container.innerHTML = `
-      <div class="search-empty-hint">
-        <div class="big">🔍</div>
-        <div class="hint-line">输入关键词开始搜索</div>
-        <div class="small">可以搜索文章标题、正文、标签名、作者名</div>
-      </div>
-    `;
+    container.innerHTML = `<div class="search-empty-hint"><div class="big">🔍</div><div class="hint-line">输入关键词开始搜索</div><div class="small">可以搜索文章标题、正文、标签名、作者名</div></div>`;
     return;
   }
-
   const matchedPosts = posts.filter(p => {
     const contentText = looksLikeHTML(p.content) ? extractTextFromHTML(p.content) : (p.content || '');
-    return p.title.toLowerCase().includes(kw) ||
-      contentText.toLowerCase().includes(kw) ||
-      (p.excerpt || '').toLowerCase().includes(kw) ||
-      p.author.toLowerCase().includes(kw) ||
-      p.tags.some(s => {
-        const t = tags.find(x => x.slug === s);
-        return t && t.name.toLowerCase().includes(kw);
-      });
+    return p.title.toLowerCase().includes(kw) || contentText.toLowerCase().includes(kw) ||
+      (p.excerpt || '').toLowerCase().includes(kw) || p.author.toLowerCase().includes(kw) ||
+      p.tags.some(s => { const t = tags.find(x => x.slug === s); return t && t.name.toLowerCase().includes(kw); });
   }).sort((a, b) => b.id - a.id);
-
-  const matchedTags = tags.filter(t =>
-    t.name.toLowerCase().includes(kw) || (t.desc || '').toLowerCase().includes(kw)
-  );
-
+  const matchedTags = tags.filter(t => t.name.toLowerCase().includes(kw) || (t.desc || '').toLowerCase().includes(kw));
   const authorMap = {};
   posts.forEach(p => {
     if (!authorMap[p.author]) authorMap[p.author] = { name: p.author, postCount: 0, likes: 0 };
     authorMap[p.author].postCount += 1;
     authorMap[p.author].likes += (p.likes || 0);
   });
-  const matchedAuthors = Object.values(authorMap)
-    .filter(a => a.name.toLowerCase().includes(kw))
-    .sort((a, b) => b.postCount - a.postCount);
-
+  const matchedAuthors = Object.values(authorMap).filter(a => a.name.toLowerCase().includes(kw)).sort((a, b) => b.postCount - a.postCount);
   const totalCount = matchedPosts.length + matchedTags.length + matchedAuthors.length;
 
-  let html = `
-    <div class="tabs">
-      <span class="tab ${searchTab === 'all' ? 'active' : ''}" data-search-tab="all">全部 (${totalCount})</span>
-      <span class="tab ${searchTab === 'posts' ? 'active' : ''}" data-search-tab="posts">文章 (${matchedPosts.length})</span>
-      <span class="tab ${searchTab === 'tags' ? 'active' : ''}" data-search-tab="tags">标签 (${matchedTags.length})</span>
-      <span class="tab ${searchTab === 'users' ? 'active' : ''}" data-search-tab="users">作者 (${matchedAuthors.length})</span>
-    </div>
-  `;
+  let html = `<div class="tabs">
+    <span class="tab ${searchTab === 'all' ? 'active' : ''}" data-search-tab="all">全部 (${totalCount})</span>
+    <span class="tab ${searchTab === 'posts' ? 'active' : ''}" data-search-tab="posts">文章 (${matchedPosts.length})</span>
+    <span class="tab ${searchTab === 'tags' ? 'active' : ''}" data-search-tab="tags">标签 (${matchedTags.length})</span>
+    <span class="tab ${searchTab === 'users' ? 'active' : ''}" data-search-tab="users">作者 (${matchedAuthors.length})</span>
+  </div>`;
 
   if (totalCount === 0) {
-    html += `
-      <div class="search-empty-hint">
-        <div class="big">😶</div>
-        <div class="hint-line">没有找到与「${escapeHTML(rawKw)}」相关的内容</div>
-        <div class="small">换个关键词试试</div>
-      </div>
-    `;
-    container.innerHTML = html;
-    bindSearchTabs();
-    return;
+    html += `<div class="search-empty-hint"><div class="big">😶</div><div class="hint-line">没有找到与「${escapeHTML(rawKw)}」相关的内容</div><div class="small">换个关键词试试</div></div>`;
+    container.innerHTML = html; bindSearchTabs(); return;
   }
-
   const showPosts = searchTab === 'all' || searchTab === 'posts';
   const showTags = searchTab === 'all' || searchTab === 'tags';
   const showUsers = searchTab === 'all' || searchTab === 'users';
 
   if (showTags && matchedTags.length) {
-    html += `<h2>标签 (${matchedTags.length})</h2>`;
-    html += `<div class="tag-grid">${matchedTags.map(t => {
+    html += `<h2>标签 (${matchedTags.length})</h2><div class="tag-grid">${matchedTags.map(t => {
       const count = posts.filter(p => p.tags.includes(t.slug)).length;
-      return `
-        <a class="tag-card" href="#/tag/${encodeURIComponent(t.slug)}">
-          <div class="tc-name">#${highlight(t.name, rawKw)}</div>
-          <div class="tc-desc">${escapeHTML(t.desc || '')}</div>
-          <div class="tc-meta">${count} 篇文章</div>
-        </a>`;
+      return `<a class="tag-card" href="#/tag/${encodeURIComponent(t.slug)}"><div class="tc-name">#${highlight(t.name, rawKw)}</div><div class="tc-desc">${escapeHTML(t.desc || '')}</div><div class="tc-meta">${count} 篇文章</div></a>`;
     }).join('')}</div>`;
   }
-
   if (showUsers && matchedAuthors.length) {
-    html += `<h2>作者 (${matchedAuthors.length})</h2>`;
-    html += `<div class="tag-grid">${matchedAuthors.map(a => userCardHTML(a.name)).join('')}</div>`;
+    html += `<h2>作者 (${matchedAuthors.length})</h2><div class="tag-grid">${matchedAuthors.map(a => userCardHTML(a.name)).join('')}</div>`;
   }
-
   if (showPosts && matchedPosts.length) {
     html += `<h2>文章 (${matchedPosts.length})</h2>`;
     const shown = matchedPosts.slice(0, searchVisible);
     html += shown.map(postCardHTML).join('');
     html += loadMoreHTML(searchVisible, matchedPosts.length, true);
   }
-
   container.innerHTML = html;
   bindSearchTabs();
   bindLoadMore(() => { searchVisible += PAGE_SIZE; updateSearchResults(); });
 }
-
 function bindSearchTabs() {
   document.querySelectorAll('.tab[data-search-tab]').forEach(el => {
-    el.addEventListener('click', () => {
-      searchTab = el.dataset.searchTab;
-      searchVisible = PAGE_SIZE;
-      updateSearchResults();
-    });
+    el.addEventListener('click', () => { searchTab = el.dataset.searchTab; searchVisible = PAGE_SIZE; updateSearchResults(); });
   });
 }
 
 /* ============ 首页 ============ */
-let homeSort = 'new';
-let homeKeyword = '';
-let homeTab = 'all';
-
+let homeSort = 'new', homeKeyword = '', homeTab = 'all';
 function renderHome() {
+  cleanupTOC();
   let list = posts.slice();
-  if (homeTab === 'following-tags') {
-    list = list.filter(p => p.tags.some(s => followedTags.includes(s)));
-  } else if (homeTab === 'following-authors') {
-    list = list.filter(p => followedAuthors.has(p.author));
-  }
-
+  if (homeTab === 'following-tags') list = list.filter(p => p.tags.some(s => followedTags.includes(s)));
+  else if (homeTab === 'following-authors') list = list.filter(p => followedAuthors.has(p.author));
   const kw = homeKeyword.trim().toLowerCase();
   if (kw) {
     list = list.filter(p => {
       const contentText = looksLikeHTML(p.content) ? extractTextFromHTML(p.content) : (p.content || '');
-      return p.title.toLowerCase().includes(kw) ||
-        contentText.toLowerCase().includes(kw) ||
-        p.author.toLowerCase().includes(kw) ||
-        p.tags.some(s => {
-          const t = tags.find(x => x.slug === s);
-          return t && (t.name.toLowerCase().includes(kw) || s.toLowerCase().includes(kw));
-        });
+      return p.title.toLowerCase().includes(kw) || contentText.toLowerCase().includes(kw) || p.author.toLowerCase().includes(kw) ||
+        p.tags.some(s => { const t = tags.find(x => x.slug === s); return t && (t.name.toLowerCase().includes(kw) || s.toLowerCase().includes(kw)); });
     });
   }
   if (homeSort === 'hot') list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
@@ -1618,13 +1680,9 @@ function renderHome() {
 
   let listHTML;
   if (!list.length) {
-    if (homeTab === 'following-tags' && followedTags.length === 0) {
-      listHTML = `<p class="empty">你还没有关注任何标签，去 <a href="#/tags" style="color:var(--primary);">标签页</a> 逛逛吧</p>`;
-    } else if (homeTab === 'following-authors' && followedAuthors.size === 0) {
-      listHTML = `<p class="empty">你还没有关注任何作者。去文章里点作者名进入 TA 的主页，然后点「关注」</p>`;
-    } else {
-      listHTML = `<p class="empty">${kw ? '没有找到匹配的文章' : '还没有文章，点右上角写一篇吧'}</p>`;
-    }
+    if (homeTab === 'following-tags' && followedTags.length === 0) listHTML = `<p class="empty">你还没有关注任何标签，去 <a href="#/tags" style="color:var(--primary);">标签页</a> 逛逛吧</p>`;
+    else if (homeTab === 'following-authors' && followedAuthors.size === 0) listHTML = `<p class="empty">你还没有关注任何作者。去文章里点作者名进入 TA 的主页，然后点「关注」</p>`;
+    else listHTML = `<p class="empty">${kw ? '没有找到匹配的文章' : '还没有文章，点右上角写一篇吧'}</p>`;
   } else {
     const shown = list.slice(0, homeVisible);
     listHTML = shown.map(postCardHTML).join('');
@@ -1635,9 +1693,7 @@ function renderHome() {
     <div class="container">
       <h1>发现好内容</h1>
       <p class="sub">来自所有创作者的图文作品</p>
-      <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="搜索标题、正文、作者或标签…" value="${escapeHTML(homeKeyword)}" />
-      </div>
+      <div class="search-bar"><input type="text" id="searchInput" placeholder="搜索标题、正文、作者或标签…" value="${escapeHTML(homeKeyword)}" /></div>
       <div class="tabs">
         <span class="tab ${homeTab === 'all' ? 'active' : ''}" data-tab="all">推荐</span>
         <span class="tab ${homeTab === 'following-tags' ? 'active' : ''}" data-tab="following-tags">关注的标签</span>
@@ -1649,49 +1705,31 @@ function renderHome() {
       ${listHTML}
     </div>
   `;
-
   const input = document.getElementById('searchInput');
   input.addEventListener('input', e => {
-    homeKeyword = e.target.value;
-    homeVisible = PAGE_SIZE;
-    const pos = e.target.selectionStart;
-    renderHome();
-    const ni = document.getElementById('searchInput');
-    ni.focus(); ni.setSelectionRange(pos, pos);
+    homeKeyword = e.target.value; homeVisible = PAGE_SIZE;
+    const pos = e.target.selectionStart; renderHome();
+    const ni = document.getElementById('searchInput'); ni.focus(); ni.setSelectionRange(pos, pos);
   });
-  document.querySelectorAll('.tab[data-tab]').forEach(el => el.addEventListener('click', () => {
-    homeTab = el.dataset.tab; homeVisible = PAGE_SIZE; renderHome();
-  }));
-  document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => {
-    homeSort = el.dataset.sort; homeVisible = PAGE_SIZE; renderHome();
-  }));
+  document.querySelectorAll('.tab[data-tab]').forEach(el => el.addEventListener('click', () => { homeTab = el.dataset.tab; homeVisible = PAGE_SIZE; renderHome(); }));
+  document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => { homeSort = el.dataset.sort; homeVisible = PAGE_SIZE; renderHome(); }));
   bindLoadMore(() => { homeVisible += PAGE_SIZE; renderHome(); });
 }
 
 /* ============ 标签广场 ============ */
 function renderTags() {
+  cleanupTOC();
   const cards = tags.map(t => {
     const count = posts.filter(p => p.tags.includes(t.slug)).length;
-    return `
-      <a class="tag-card" href="#/tag/${encodeURIComponent(t.slug)}">
-        <div class="tc-name">#${escapeHTML(t.name)}</div>
-        <div class="tc-desc">${escapeHTML(t.desc || '')}</div>
-        <div class="tc-meta">${count} 篇文章</div>
-      </a>
-    `;
+    return `<a class="tag-card" href="#/tag/${encodeURIComponent(t.slug)}"><div class="tc-name">#${escapeHTML(t.name)}</div><div class="tc-desc">${escapeHTML(t.desc || '')}</div><div class="tc-meta">${count} 篇文章</div></a>`;
   }).join('');
-  app.innerHTML = `
-    <div class="container">
-      <h1>标签广场</h1>
-      <p class="sub">按兴趣浏览，关注你喜欢的标签</p>
-      ${tags.length ? `<div class="tag-grid">${cards}</div>` : `<p class="empty">还没有任何标签，写文章时可以自己创建</p>`}
-    </div>
-  `;
+  app.innerHTML = `<div class="container"><h1>标签广场</h1><p class="sub">按兴趣浏览，关注你喜欢的标签</p>${tags.length ? `<div class="tag-grid">${cards}</div>` : `<p class="empty">还没有任何标签，写文章时可以自己创建</p>`}</div>`;
 }
 
 /* ============ 标签详情 ============ */
 let tagSort = 'new';
 function renderTag(slug) {
+  cleanupTOC();
   const decoded = decodeURIComponent(slug);
   const tag = tags.find(t => t.slug === decoded);
   if (!tag) { app.innerHTML = `<div class="container"><p class="empty">标签不存在</p></div>`; return; }
@@ -1699,12 +1737,10 @@ function renderTag(slug) {
   let list = posts.filter(p => p.tags.includes(tag.slug));
   if (tagSort === 'hot') list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   else list.sort((a, b) => b.id - a.id);
-
   let listHTML;
   if (list.length) {
     const shown = list.slice(0, tagVisible);
-    listHTML = shown.map(postCardHTML).join('');
-    listHTML += loadMoreHTML(tagVisible, list.length, true);
+    listHTML = shown.map(postCardHTML).join('') + loadMoreHTML(tagVisible, list.length, true);
   } else listHTML = `<p class="empty">这个标签下还没有文章</p>`;
 
   app.innerHTML = `
@@ -1727,16 +1763,14 @@ function renderTag(slug) {
     else followedTags.push(tag.slug);
     saveFollows(); renderTag(slug);
   });
-  document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => {
-    tagSort = el.dataset.sort; tagVisible = PAGE_SIZE; renderTag(slug);
-  }));
+  document.querySelectorAll('.tab[data-sort]').forEach(el => el.addEventListener('click', () => { tagSort = el.dataset.sort; tagVisible = PAGE_SIZE; renderTag(slug); }));
   bindLoadMore(() => { tagVisible += PAGE_SIZE; renderTag(slug); });
 }
 
 /* ============ 我的页面 ============ */
 let meTab = 'posts';
-
 function renderMe() {
+  cleanupTOC();
   if (!requireLogin('请先登录')) return;
   const name = displayName();
   const myPosts = posts.filter(p => String(p.userId) === String(currentUser.id)).sort((a, b) => b.id - a.id);
@@ -1748,46 +1782,34 @@ function renderMe() {
   if (meTab === 'posts') {
     if (myPosts.length) {
       const shown = myPosts.slice(0, meVisible);
-      tabContent = shown.map(postCardHTML).join('');
-      tabContent += loadMoreHTML(meVisible, myPosts.length, true);
+      tabContent = shown.map(postCardHTML).join('') + loadMoreHTML(meVisible, myPosts.length, true);
     } else tabContent = `<p class="empty">你还没有发布文章，<a href="#/write" style="color:var(--primary);">写一篇</a>吧</p>`;
   } else if (meTab === 'favorites') {
     if (myFavPosts.length) {
       const shown = myFavPosts.slice(0, meFavVisible);
-      tabContent = shown.map(postCardHTML).join('');
-      tabContent += loadMoreHTML(meFavVisible, myFavPosts.length, true);
+      tabContent = shown.map(postCardHTML).join('') + loadMoreHTML(meFavVisible, myFavPosts.length, true);
     } else tabContent = `<p class="empty">你还没有收藏任何文章</p>`;
   } else if (meTab === 'collections') {
-    tabContent = myColls.length
-      ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>`
-      : `<p class="empty">你还没有创建合集</p>`;
+    tabContent = myColls.length ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>` : `<p class="empty">你还没有创建合集</p>`;
   } else if (meTab === 'tags') {
     const followed = tags.filter(t => followedTags.includes(t.slug));
     if (followed.length) {
       tabContent = `<div class="tag-grid">${followed.map(t => {
         const count = posts.filter(p => p.tags.includes(t.slug)).length;
-        return `
-          <a class="tag-card" href="#/tag/${encodeURIComponent(t.slug)}">
-            <div class="tc-name">#${escapeHTML(t.name)}</div>
-            <div class="tc-desc">${escapeHTML(t.desc || '')}</div>
-            <div class="tc-meta">${count} 篇文章</div>
-          </a>`;
+        return `<a class="tag-card" href="#/tag/${encodeURIComponent(t.slug)}"><div class="tc-name">#${escapeHTML(t.name)}</div><div class="tc-desc">${escapeHTML(t.desc || '')}</div><div class="tc-meta">${count} 篇文章</div></a>`;
       }).join('')}</div>`;
     } else tabContent = `<p class="empty">你还没有关注任何标签</p>`;
   } else if (meTab === 'authors') {
     const followed = Array.from(followedAuthors);
-    if (followed.length) {
-      tabContent = `<div class="tag-grid">${followed.map(n => userCardHTML(n)).join('')}</div>`;
-    } else tabContent = `<p class="empty">你还没有关注任何作者</p>`;
+    if (followed.length) tabContent = `<div class="tag-grid">${followed.map(n => userCardHTML(n)).join('')}</div>`;
+    else tabContent = `<p class="empty">你还没有关注任何作者</p>`;
   }
 
   app.innerHTML = `
     <div class="container">
       <div class="me-header">
         <div class="me-avatar-wrap" id="avatarWrap" title="点击更换头像">
-          ${currentUser.avatar
-            ? `<img class="me-avatar" src="${currentUser.avatar}" alt="" />`
-            : `<div class="me-avatar">${escapeHTML(name[0])}</div>`}
+          ${currentUser.avatar ? `<img class="me-avatar" src="${currentUser.avatar}" alt="" />` : `<div class="me-avatar">${escapeHTML(name[0])}</div>`}
           <div class="me-avatar-hint">更换</div>
         </div>
         <input type="file" id="avatarInput" accept="image/*" style="display:none" />
@@ -1830,30 +1852,19 @@ function renderMe() {
     try {
       const url = await uploadAvatar(file);
       await saveAvatar(url);
-      renderHeader();
-      renderMe();
-      showSync('头像已更新');
+      renderHeader(); renderMe(); showSync('头像已更新');
     } catch (err) {
-      console.error(err);
       alert('头像上传失败：' + (err.message || '请重试'));
       wrap.innerHTML = oldHtml;
     }
   });
-
   document.querySelectorAll('.tab[data-me]').forEach(el => el.addEventListener('click', () => {
-    meTab = el.dataset.me;
-    meVisible = PAGE_SIZE; meFavVisible = PAGE_SIZE;
-    renderMe();
+    meTab = el.dataset.me; meVisible = PAGE_SIZE; meFavVisible = PAGE_SIZE; renderMe();
   }));
-
   document.getElementById('logoutBtn').addEventListener('click', () => {
     if (!confirm('确定退出登录？')) return;
-    stopPolling();
-    saveUser(null);
-    location.hash = '#/';
-    location.reload();
+    stopPolling(); saveUser(null); location.hash = '#/'; location.reload();
   });
-
   bindLoadMore(() => {
     if (meTab === 'posts') meVisible += PAGE_SIZE;
     else if (meTab === 'favorites') meFavVisible += PAGE_SIZE;
@@ -1863,26 +1874,18 @@ function renderMe() {
 
 /* ============ 他人主页 ============ */
 function renderUser(name) {
+  cleanupTOC();
   const decoded = decodeURIComponent(name);
   const list = posts.filter(p => p.author === decoded).sort((a, b) => b.id - a.id);
   const myColls = collections.filter(c => c.author === decoded);
   const isMe = currentUser && decoded === displayName();
   const isFollowing = followedAuthors.has(decoded);
   const likes = list.reduce((s, p) => s + (p.likes || 0), 0);
-
   const listHTML = list.length ? list.map(postCardHTML).join('') : `<p class="empty">TA 还没有发布文章</p>`;
-  const collHTML = myColls.length
-    ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>`
-    : `<p style="color:var(--text-3);font-size:14px;">TA 还没有创建合集</p>`;
-
-  const followBtn = !isMe && currentUser
-    ? `<button class="follow-btn ${isFollowing ? 'followed' : ''}" id="followAuthorBtn">${isFollowing ? '已关注' : '+ 关注'}</button>`
-    : '';
+  const collHTML = myColls.length ? `<div class="collection-grid">${myColls.map(collectionCardHTML).join('')}</div>` : `<p style="color:var(--text-3);font-size:14px;">TA 还没有创建合集</p>`;
+  const followBtn = !isMe && currentUser ? `<button class="follow-btn ${isFollowing ? 'followed' : ''}" id="followAuthorBtn">${isFollowing ? '已关注' : '+ 关注'}</button>` : '';
   const loginHint = !currentUser ? `<a href="#/login" class="mini-btn">登录后可关注</a>` : '';
-
-  const avatarBlock = avatarURL(decoded)
-    ? `<img class="me-avatar" src="${avatarURL(decoded)}" alt="" />`
-    : `<div class="me-avatar">${escapeHTML(decoded[0])}</div>`;
+  const avatarBlock = avatarURL(decoded) ? `<img class="me-avatar" src="${avatarURL(decoded)}" alt="" />` : `<div class="me-avatar">${escapeHTML(decoded[0])}</div>`;
 
   app.innerHTML = `
     <div class="container">
@@ -1904,20 +1907,15 @@ function renderUser(name) {
       ${listHTML}
     </div>
   `;
-
   const fb = document.getElementById('followAuthorBtn');
-  if (fb) fb.addEventListener('click', async () => {
-    await toggleFollowAuthor(decoded);
-    renderUser(name);
-  });
+  if (fb) fb.addEventListener('click', async () => { await toggleFollowAuthor(decoded); renderUser(name); });
 }
 
 /* ============ 合集广场 / 详情 / 编辑 ============ */
 function renderCollections() {
+  cleanupTOC();
   const all = collections.slice().sort((a, b) => b.id - a.id);
-  const gridHTML = all.length
-    ? `<div class="collection-grid">${all.map(collectionCardHTML).join('')}</div>`
-    : `<p class="empty">还没有任何合集</p>`;
+  const gridHTML = all.length ? `<div class="collection-grid">${all.map(collectionCardHTML).join('')}</div>` : `<p class="empty">还没有任何合集</p>`;
   app.innerHTML = `
     <div class="container">
       <div class="section-head">
@@ -1929,18 +1927,16 @@ function renderCollections() {
     </div>
   `;
 }
-
 function renderCollection(id) {
+  cleanupTOC();
   const c = collections.find(x => x.id === Number(id));
   if (!c) { app.innerHTML = `<div class="container"><p class="empty">合集不存在</p></div>`; return; }
   const isMine = currentUser && String(c.userId) === String(currentUser.id);
   const list = posts.filter(p => p.collectionId === c.id).sort((a, b) => b.id - a.id);
-
   let listHTML;
   if (list.length) {
     const shown = list.slice(0, collectionVisible);
-    listHTML = shown.map(postCardHTML).join('');
-    listHTML += loadMoreHTML(collectionVisible, list.length, true);
+    listHTML = shown.map(postCardHTML).join('') + loadMoreHTML(collectionVisible, list.length, true);
   } else listHTML = `<p class="empty">这个合集下还没有文章</p>`;
 
   app.innerHTML = `
@@ -1955,10 +1951,7 @@ function renderCollection(id) {
             <a class="author-link" href="#/user/${encodeURIComponent(c.author)}">${escapeHTML(c.author)}</a>
             · ${list.length} 篇文章
           </p>
-          ${isMine ? `
-            <a href="#/collection/edit/${c.id}" class="mini-btn" style="display:inline-block;">编辑</a>
-            <span class="danger-text" id="delCollBtn" style="margin-left:12px;">删除合集</span>
-          ` : ''}
+          ${isMine ? `<a href="#/collection/edit/${c.id}" class="mini-btn" style="display:inline-block;">编辑</a><span class="danger-text" id="delCollBtn" style="margin-left:12px;">删除合集</span>` : ''}
         </div>
       </div>
       <h2>包含的文章</h2>
@@ -1981,41 +1974,30 @@ function renderCollection(id) {
 }
 
 let collectionCoverData = null;
-
 function renderCollectionEdit(editId) {
+  cleanupTOC();
   if (!requireLogin('请先登录后再创建合集')) return;
   const editing = editId ? collections.find(x => x.id === Number(editId)) : null;
   if (editId && (!editing || String(editing.userId) !== String(currentUser.id))) {
-    app.innerHTML = `<div class="container"><p class="empty">合集不存在或没有权限</p></div>`;
-    return;
+    app.innerHTML = `<div class="container"><p class="empty">合集不存在或没有权限</p></div>`; return;
   }
   collectionCoverData = null;
-
   app.innerHTML = `
     <div class="container">
       <a class="back" href="${editing ? '#/collection/' + editing.id : '#/collections'}">← 返回</a>
       <h1>${editing ? '编辑合集' : '新建合集'}</h1>
       <p class="sub">合集是一组相关文章的集合，比如「旅行手记」「科幻短篇集」</p>
-      <div class="form-group">
-        <label>合集名称</label>
-        <input type="text" id="collName" placeholder="例如：科幻短篇集" value="${editing ? escapeHTML(editing.name) : ''}" />
-      </div>
-      <div class="form-group">
-        <label>简介（可选）</label>
-        <textarea id="collDesc" class="short" placeholder="简单描述这个合集">${editing ? escapeHTML(editing.desc || '') : ''}</textarea>
-      </div>
+      <div class="form-group"><label>合集名称</label><input type="text" id="collName" placeholder="例如：科幻短篇集" value="${editing ? escapeHTML(editing.name) : ''}" /></div>
+      <div class="form-group"><label>简介（可选）</label><textarea id="collDesc" class="short" placeholder="简单描述这个合集">${editing ? escapeHTML(editing.desc || '') : ''}</textarea></div>
       <div class="form-group">
         <label>封面图（可选，会自动压缩）</label>
-        <div class="upload-box" id="collUploadBox">
-          ${editing && editing.cover ? `<img src="${editing.cover}" alt="封面预览" />` : `<div class="hint">点击选择图片</div>`}
-        </div>
+        <div class="upload-box" id="collUploadBox">${editing && editing.cover ? `<img src="${editing.cover}" alt="封面预览" />` : `<div class="hint">点击选择图片</div>`}</div>
         <input type="file" id="collFileInput" accept="image/*" style="display:none" />
       </div>
       <button class="submit-btn" id="collSubmitBtn">${editing ? '保存修改' : '创建合集'}</button>
       <button class="btn-secondary" id="collCancelBtn">取消</button>
     </div>
   `;
-
   const uploadBox = document.getElementById('collUploadBox');
   const fileInput = document.getElementById('collFileInput');
   uploadBox.addEventListener('click', () => fileInput.click());
@@ -2026,22 +2008,18 @@ function renderCollectionEdit(editId) {
       collectionCoverData = await uploadImage(file);
       uploadBox.innerHTML = `<img src="${collectionCoverData}" alt="封面预览" />`;
     } catch (err) {
-      console.error(err);
       uploadBox.innerHTML = '<div class="hint">上传失败：' + escapeHTML(err.message || '请重试') + '</div>';
       collectionCoverData = null;
     }
   });
-
   document.getElementById('collSubmitBtn').addEventListener('click', async () => {
     const name = document.getElementById('collName').value.trim();
     const desc = document.getElementById('collDesc').value.trim();
     if (!name) return alert('请填写合集名称');
-
     const nameCheck = checkContent(name);
     if (!nameCheck.ok) { showSensitiveError(nameCheck.hits); return; }
     const descCheck = checkContent(desc);
     if (!descCheck.ok) { showSensitiveError(descCheck.hits); return; }
-
     if (editing) {
       editing.name = name; editing.desc = desc;
       if (collectionCoverData) editing.cover = collectionCoverData;
@@ -2052,15 +2030,13 @@ function renderCollectionEdit(editId) {
       const coll = {
         id: newId, name, desc, author: displayName(),
         cover: collectionCoverData || ('https://picsum.photos/seed/coll' + newId + '/600/400'),
-        date: new Date().toISOString().slice(0, 10),
-        userId: currentUser.id,
+        date: new Date().toISOString().slice(0, 10), userId: currentUser.id,
       };
       collections.push(coll);
       await syncColl(coll);
       location.hash = '#/collection/' + newId;
     }
   });
-
   document.getElementById('collCancelBtn').addEventListener('click', () => history.back());
 }
 
@@ -2071,13 +2047,9 @@ function showCollectionPicker(p) {
     ? myColls.map(c => {
         const count = posts.filter(x => x.collectionId === c.id).length;
         const selected = p.collectionId === c.id ? 'selected' : '';
-        return `<div class="coll-option ${selected}" data-id="${c.id}">
-          <div class="coll-option-name">📚 ${escapeHTML(c.name)}</div>
-          <div class="coll-option-meta">${count} 篇文章</div>
-        </div>`;
+        return `<div class="coll-option ${selected}" data-id="${c.id}"><div class="coll-option-name">📚 ${escapeHTML(c.name)}</div><div class="coll-option-meta">${count} 篇文章</div></div>`;
       }).join('')
     : `<p style="color:var(--text-3);font-size:14px;text-align:center;padding:16px 0;">你还没有创建合集</p>`;
-
   const modal = document.createElement('div');
   modal.className = 'modal-mask';
   modal.innerHTML = `
@@ -2085,10 +2057,7 @@ function showCollectionPicker(p) {
       <h3>把文章加入合集</h3>
       <p class="modal-sub">选择要加入的合集。同一篇文章只能在一个合集里。</p>
       <div class="coll-list">
-        <div class="coll-option ${!p.collectionId ? 'selected' : ''}" data-id="">
-          <div class="coll-option-name">不加入合集</div>
-          <div class="coll-option-meta">保持独立文章</div>
-        </div>
+        <div class="coll-option ${!p.collectionId ? 'selected' : ''}" data-id=""><div class="coll-option-name">不加入合集</div><div class="coll-option-meta">保持独立文章</div></div>
         ${optionsHTML}
       </div>
       <div class="modal-actions">
@@ -2109,12 +2078,10 @@ function showCollectionPicker(p) {
   modal.querySelector('#createCollBtn').addEventListener('click', () => modal.remove());
 }
 
-// 举报弹窗
 function showReportDialog(post) {
   if (!currentUser) { alert('请先登录'); location.hash = '#/login'; return; }
   if (String(post.userId) === String(currentUser.id)) { alert('不能举报自己的文章'); return; }
   if (myReports.has(post.id)) { alert('你已经举报过这篇文章了，我们会尽快处理'); return; }
-
   const reasons = ['垃圾广告', '色情低俗', '人身攻击', '虚假信息', '侵犯版权', '其他'];
   const modal = document.createElement('div');
   modal.className = 'modal-mask';
@@ -2133,7 +2100,6 @@ function showReportDialog(post) {
   `;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-
   let selectedReason = '';
   const submitBtn = modal.querySelector('#reportSubmitBtn');
   modal.querySelectorAll('.report-reason').forEach(el => {
@@ -2144,7 +2110,6 @@ function showReportDialog(post) {
       submitBtn.disabled = false;
     });
   });
-
   submitBtn.addEventListener('click', async () => {
     if (!selectedReason) return;
     submitBtn.disabled = true; submitBtn.textContent = '提交中…';
@@ -2157,11 +2122,11 @@ function showReportDialog(post) {
       submitBtn.disabled = false; submitBtn.textContent = '提交举报';
     }
   });
-
   modal.querySelector('#reportCancelBtn').addEventListener('click', () => modal.remove());
 }
 
 function renderPost(id) {
+  cleanupTOC();
   const p = posts.find(x => x.id === Number(id));
   if (!p) { app.innerHTML = `<div class="container"><p class="empty">文章不存在</p></div>`; return; }
 
@@ -2177,119 +2142,101 @@ function renderPost(id) {
   const currentName = displayName();
 
   const collHTML = coll
-    ? `<a href="#/collection/${coll.id}" style="display:inline-block;margin-top:20px;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text-2);font-size:14px;">
-        📚 收录于合集：<strong style="color:var(--primary);">${escapeHTML(coll.name)}</strong> →
-      </a>` : '';
+    ? `<a href="#/collection/${coll.id}" style="display:inline-block;margin-top:20px;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text-2);font-size:14px;">📚 收录于合集：<strong style="color:var(--primary);">${escapeHTML(coll.name)}</strong> →</a>`
+    : '';
 
   const commentsHTML = p.comments.length
     ? p.comments.map(c => {
         const canEdit = currentUser && c.author === currentName;
-        const actions = canEdit ? `
-          <div class="c-actions">
-            <span class="edit" data-action="edit" data-cid="${c.id}">编辑</span>
-            <span class="del" data-action="del" data-cid="${c.id}">删除</span>
-          </div>` : '';
-        return `
-          <div class="comment-item" data-cid="${c.id}">
-            <div class="c-head">
-              ${avatarHTML(c.author, 18, 'avatar-sm')}
-              <span class="c-author-name">${escapeHTML(c.author)}</span>
-              <span>· ${c.date}</span>
-              ${actions}
-            </div>
-            <div class="c-content">${escapeHTML(c.content)}</div>
-            <div class="c-edit-row" style="display:none;"></div>
-          </div>
-        `;
+        const actions = canEdit ? `<div class="c-actions"><span class="edit" data-action="edit" data-cid="${c.id}">编辑</span><span class="del" data-action="del" data-cid="${c.id}">删除</span></div>` : '';
+        return `<div class="comment-item" data-cid="${c.id}"><div class="c-head">${avatarHTML(c.author, 18, 'avatar-sm')}<span class="c-author-name">${escapeHTML(c.author)}</span><span>· ${c.date}</span>${actions}</div><div class="c-content">${escapeHTML(c.content)}</div><div class="c-edit-row" style="display:none;"></div></div>`;
       }).join('')
     : `<p style="color:var(--text-3);font-size:14px;">还没有评论，来说两句吧</p>`;
-
   const commentForm = currentUser
-    ? `<div class="comment-form">
-         <input type="text" id="commentInput" placeholder="写下你的评论…" />
-         <button id="commentBtn">发送</button>
-       </div>`
+    ? `<div class="comment-form"><input type="text" id="commentInput" placeholder="写下你的评论…" /><button id="commentBtn">发送</button></div>`
     : `<p style="color:var(--text-3);font-size:14px;margin-top:12px;"><a href="#/login" style="color:var(--primary);">登录</a> 后可以评论</p>`;
-
   const authorAvatar = avatarHTML(p.author, 40);
-  const contentDisplay = looksLikeHTML(p.content)
-    ? sanitizeHTML(p.content)
-    : escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>');
-
-  const reportBtn = !isMine && currentUser
-    ? `<span class="report-text" id="reportPostBtn">举报这篇文章</span>` : '';
+  const contentDisplay = looksLikeHTML(p.content) ? sanitizeHTML(p.content) : escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>');
+  const reportBtn = !isMine && currentUser ? `<span class="report-text" id="reportPostBtn">举报这篇文章</span>` : '';
 
   app.innerHTML = `
     <div class="container">
       <a class="back" href="#/">← 返回首页</a>
-      <h1>${escapeHTML(p.title)}</h1>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
-        ${authorAvatar}
-        <div>
-          <a class="author-link" href="#/user/${encodeURIComponent(p.author)}" style="font-size:15px;font-weight:500;">${escapeHTML(p.author)}</a>
-          <div style="font-size:12px;color:var(--text-3);">${p.date}</div>
+      <div class="post-layout">
+        <div class="post-main">
+          <h1>${escapeHTML(p.title)}</h1>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            ${authorAvatar}
+            <div>
+              <a class="author-link" href="#/user/${encodeURIComponent(p.author)}" style="font-size:15px;font-weight:500;">${escapeHTML(p.author)}</a>
+              <div style="font-size:12px;color:var(--text-3);">${p.date}</div>
+            </div>
+          </div>
+          <button class="toc-mobile-btn" id="tocMobileBtn" style="display:none;"></button>
+          <img class="post-cover" src="${coverOf(p)}" alt="${escapeHTML(p.title)}" data-zoomable />
+          <div class="post-content">${contentDisplay}</div>
+          <div class="tags" style="margin-top:24px;">${tagHTML}</div>
+          ${collHTML}
+
+          <div class="action-bar">
+            <button class="action-btn ${liked ? 'liked' : ''}" id="likeBtn">${liked ? '♥' : '♡'} 点赞 ${p.likes}</button>
+            <button class="action-btn ${faved ? 'faved' : ''}" id="favBtn">${faved ? '⭐' : '☆'} ${faved ? '已收藏' : '收藏'}</button>
+            ${isMine ? `<button class="action-btn" id="collBtn">${collBtnText}</button>` : ''}
+            ${isMine ? `<button class="action-btn" id="editBtn">编辑</button>` : ''}
+            ${isMine ? `<button class="action-btn danger" id="deleteBtn">删除文章</button>` : ''}
+          </div>
+          <div style="text-align:right;margin-top:-16px;margin-bottom:8px;">${reportBtn}</div>
+
+          <div class="comments">
+            <h2 style="margin-top:0;">评论 (${p.comments.length})</h2>
+            <div id="commentList">${commentsHTML}</div>
+            ${commentForm}
+          </div>
         </div>
-      </div>
-      <img class="post-cover" src="${coverOf(p)}" alt="${escapeHTML(p.title)}" />
-      <div class="post-content">${contentDisplay}</div>
-      <div class="tags" style="margin-top:24px;">${tagHTML}</div>
-      ${collHTML}
-
-      <div class="action-bar">
-        <button class="action-btn ${liked ? 'liked' : ''}" id="likeBtn">${liked ? '♥' : '♡'} 点赞 ${p.likes}</button>
-        <button class="action-btn ${faved ? 'faved' : ''}" id="favBtn">${faved ? '⭐' : '☆'} ${faved ? '已收藏' : '收藏'}</button>
-        ${isMine ? `<button class="action-btn" id="collBtn">${collBtnText}</button>` : ''}
-        ${isMine ? `<button class="action-btn" id="editBtn">编辑</button>` : ''}
-        ${isMine ? `<button class="action-btn danger" id="deleteBtn">删除文章</button>` : ''}
-      </div>
-      <div style="text-align:right;margin-top:-16px;margin-bottom:8px;">${reportBtn}</div>
-
-      <div class="comments">
-        <h2 style="margin-top:0;">评论 (${p.comments.length})</h2>
-        <div id="commentList">${commentsHTML}</div>
-        ${commentForm}
+        <aside class="toc-sidebar" id="tocSidebar" style="display:none;"></aside>
       </div>
     </div>
   `;
 
-  // 举报按钮
+  // 构建目录
+  buildTOC();
+
+  // 图片灯箱：点封面和正文里的图都能放大
+  const coverImg = document.querySelector('.post-cover');
+  if (coverImg) {
+    coverImg.addEventListener('click', () => openLightbox(coverImg.src));
+  }
+  document.querySelectorAll('.post-content img').forEach(img => {
+    img.addEventListener('click', () => openLightbox(img.src));
+  });
+
   const reportBtnEl = document.getElementById('reportPostBtn');
   if (reportBtnEl) reportBtnEl.addEventListener('click', () => showReportDialog(p));
 
   document.getElementById('likeBtn').addEventListener('click', async () => {
     const wasLiked = myLikes.includes(p.id);
     if (wasLiked) {
-      myLikes = myLikes.filter(x => x !== p.id);
-      p.likes = Math.max(0, p.likes - 1);
+      myLikes = myLikes.filter(x => x !== p.id); p.likes = Math.max(0, p.likes - 1);
     } else {
-      myLikes.push(p.id);
-      p.likes += 1;
-      if (p.userId && currentUser) {
-        await createNotification({ userId: p.userId, type: 'like', postId: p.id, postTitle: p.title });
-      }
+      myLikes.push(p.id); p.likes += 1;
+      if (p.userId && currentUser) await createNotification({ userId: p.userId, type: 'like', postId: p.id, postTitle: p.title });
     }
     saveLikes(); renderPost(p.id); await syncPost(p);
   });
-
   document.getElementById('favBtn').addEventListener('click', async () => {
     if (!currentUser) { alert('请先登录'); location.hash = '#/login'; return; }
-    await toggleFavorite(p.id);
-    renderPost(p.id);
+    await toggleFavorite(p.id); renderPost(p.id);
   });
-
   const collBtn = document.getElementById('collBtn');
   if (collBtn) collBtn.addEventListener('click', () => showCollectionPicker(p));
-
   const editBtn = document.getElementById('editBtn');
   if (editBtn) editBtn.addEventListener('click', () => { location.hash = '#/edit/' + p.id; });
-
   const delBtn = document.getElementById('deleteBtn');
   if (delBtn) {
     delBtn.addEventListener('click', async () => {
       if (!confirm('确定删除这篇文章吗？')) return;
       posts = posts.filter(x => x.id !== p.id);
-      await removePost(p);
-      location.hash = '#/me';
+      await removePost(p); location.hash = '#/me';
     });
   }
 
@@ -2304,12 +2251,10 @@ function renderPost(id) {
       if (idx === -1) return;
       const c = p.comments[idx];
       if (c.author !== currentName) return;
-
       if (action === 'del') {
         if (!confirm('确定删除这条评论吗？')) return;
         p.comments.splice(idx, 1);
-        renderPost(p.id);
-        await syncPost(p);
+        renderPost(p.id); await syncPost(p);
       } else if (action === 'edit') {
         const item = commentList.querySelector(`.comment-item[data-cid="${cid}"]`);
         if (!item) return;
@@ -2319,28 +2264,17 @@ function renderPost(id) {
         viewRow.style.display = 'none';
         editRow.style.display = 'flex';
         editRow.className = 'c-edit-row comment-edit-row';
-        editRow.innerHTML = `
-          <input type="text" value="${escapeHTML(oldContent)}" />
-          <button class="save-btn">保存</button>
-          <button class="cancel-btn">取消</button>
-        `;
-        const input = editRow.querySelector('input');
-        input.focus();
+        editRow.innerHTML = `<input type="text" value="${escapeHTML(oldContent)}" /><button class="save-btn">保存</button><button class="cancel-btn">取消</button>`;
+        const input = editRow.querySelector('input'); input.focus();
         try { input.setSelectionRange(input.value.length, input.value.length); } catch (err) {}
-
-        const cancel = () => {
-          viewRow.style.display = '';
-          editRow.style.display = 'none';
-          editRow.innerHTML = '';
-        };
+        const cancel = () => { viewRow.style.display = ''; editRow.style.display = 'none'; editRow.innerHTML = ''; };
         const save = async () => {
           const newVal = input.value.trim();
           if (!newVal) { alert('评论不能为空'); return; }
           const chk = checkContent(newVal);
           if (!chk.ok) { showSensitiveError(chk.hits); return; }
           c.content = newVal;
-          renderPost(p.id);
-          await syncPost(p);
+          renderPost(p.id); await syncPost(p);
         };
         editRow.querySelector('.cancel-btn').addEventListener('click', cancel);
         editRow.querySelector('.save-btn').addEventListener('click', save);
@@ -2361,13 +2295,7 @@ function renderPost(id) {
       const chk = checkContent(content);
       if (!chk.ok) { showSensitiveError(chk.hits); return; }
       p.comments.push({ id: Date.now(), author: currentName, content, date: new Date().toISOString().slice(0, 10) });
-      if (p.userId && currentUser) {
-        await createNotification({
-          userId: p.userId, type: 'comment',
-          postId: p.id, postTitle: p.title,
-          content: content.slice(0, 60),
-        });
-      }
+      if (p.userId && currentUser) await createNotification({ userId: p.userId, type: 'comment', postId: p.id, postTitle: p.title, content: content.slice(0, 60) });
       renderPost(p.id); await syncPost(p);
     };
     cBtn.addEventListener('click', doComment);
@@ -2376,18 +2304,12 @@ function renderPost(id) {
 }
 
 /* ============ 写 / 编辑文章 ============ */
-let selectedTags = [];
-let coverData = null;
-let quillEditor = null;
-
+let selectedTags = [], coverData = null, quillEditor = null;
 function selectLocalImage() {
   const input = document.createElement('input');
-  input.setAttribute('type', 'file');
-  input.setAttribute('accept', 'image/*');
-  input.click();
+  input.setAttribute('type', 'file'); input.setAttribute('accept', 'image/*'); input.click();
   input.onchange = async () => {
-    const file = input.files[0];
-    if (!file) return;
+    const file = input.files[0]; if (!file) return;
     try {
       const range = quillEditor.getSelection(true);
       quillEditor.insertText(range.index, '（图片上传中…）');
@@ -2397,34 +2319,25 @@ function selectLocalImage() {
       quillEditor.insertEmbed(range.index, 'image', url);
       quillEditor.setSelection(range.index + 1);
     } catch (err) {
-      console.error(err);
       alert('图片上传失败：' + (err.message || '请重试'));
-      try {
-        const r = quillEditor.getSelection();
-        if (r) quillEditor.deleteText(r.index - 9, 9);
-      } catch (e) {}
+      try { const r = quillEditor.getSelection(); if (r) quillEditor.deleteText(r.index - 9, 9); } catch (e) {}
     }
   };
 }
-
 function renderWrite(editId) {
+  cleanupTOC();
   if (!requireLogin('请先登录后再发布文章')) return;
   const editing = editId ? posts.find(x => x.id === Number(editId)) : null;
   if (editId && (!editing || String(editing.userId) !== String(currentUser.id))) {
-    app.innerHTML = `<div class="container"><p class="empty">文章不存在或没有权限</p></div>`;
-    return;
+    app.innerHTML = `<div class="container"><p class="empty">文章不存在或没有权限</p></div>`; return;
   }
-
   currentDraftEditingId = editing ? editing.id : null;
   currentDraftKey = draftKey(currentDraftEditingId);
-
   selectedTags = editing ? editing.tags.slice() : [];
   coverData = null;
 
   function tagChoicesHTML() {
-    return tags.map(t =>
-      `<span class="tag-choice ${selectedTags.includes(t.slug) ? 'active' : ''}" data-slug="${escapeHTML(t.slug)}">#${escapeHTML(t.name)}</span>`
-    ).join('');
+    return tags.map(t => `<span class="tag-choice ${selectedTags.includes(t.slug) ? 'active' : ''}" data-slug="${escapeHTML(t.slug)}">#${escapeHTML(t.name)}</span>`).join('');
   }
   function bindTagChoiceEvents() {
     document.querySelectorAll('.tag-choice').forEach(el => {
@@ -2436,39 +2349,23 @@ function renderWrite(editId) {
       });
     });
   }
-
   const myColls = collections.filter(c => String(c.userId) === String(currentUser.id));
   const currentCollId = editing && editing.collectionId ? editing.collectionId : '';
-  const collOptions = myColls.map(c =>
-    `<option value="${c.id}" ${currentCollId === c.id ? 'selected' : ''}>📚 ${escapeHTML(c.name)}</option>`
-  ).join('');
+  const collOptions = myColls.map(c => `<option value="${c.id}" ${currentCollId === c.id ? 'selected' : ''}>📚 ${escapeHTML(c.name)}</option>`).join('');
 
   app.innerHTML = `
     <div class="container">
       <a class="back" href="${editing ? '#/post/' + editing.id : '#/'}">← 返回</a>
       <h1>${editing ? '编辑文章' : '写文章'}<span class="draft-status" id="draftStatus"></span></h1>
       <p class="sub">${editing ? '修改后点保存' : '发布后会以「' + escapeHTML(displayName()) + '」的身份出现'}</p>
-
       <div id="draftBannerWrap"></div>
-
-      <div class="form-group">
-        <label>标题</label>
-        <input type="text" id="title" placeholder="给你的文章起个标题" value="${editing ? escapeHTML(editing.title) : ''}" />
-      </div>
-
+      <div class="form-group"><label>标题</label><input type="text" id="title" placeholder="给你的文章起个标题" value="${editing ? escapeHTML(editing.title) : ''}" /></div>
       <div class="form-group">
         <label>封面图（可选，会自动压缩）</label>
-        <div class="upload-box" id="uploadBox">
-          ${editing && editing.cover ? `<img src="${editing.cover}" alt="封面预览" />` : `<div class="hint">点击选择图片</div>`}
-        </div>
+        <div class="upload-box" id="uploadBox">${editing && editing.cover ? `<img src="${editing.cover}" alt="封面预览" />` : `<div class="hint">点击选择图片</div>`}</div>
         <input type="file" id="fileInput" accept="image/*" style="display:none" />
       </div>
-
-      <div class="form-group">
-        <label>正文（支持富文本：标题、加粗、列表、引用、图片）</label>
-        <div id="editor"></div>
-      </div>
-
+      <div class="form-group"><label>正文（支持富文本：标题、加粗、列表、引用、图片）</label><div id="editor"></div></div>
       <div class="form-group">
         <label>选择标签（可多选）</label>
         <div class="tag-choices" id="tagChoices">${tagChoicesHTML()}</div>
@@ -2478,17 +2375,11 @@ function renderWrite(editId) {
         </div>
         <p class="form-hint">输入后点「添加」，新标签会立刻出现在上面并自动选中。</p>
       </div>
-
       <div class="form-group">
         <label>加入合集（可选）</label>
-        <select id="collSelect">
-          <option value="">不加入合集</option>
-          ${collOptions}
-        </select>
-        ${myColls.length === 0
-          ? `<p style="font-size:13px;color:var(--text-3);margin-top:6px;">你还没有合集，<a href="#/collection/new" style="color:var(--primary);">点这里创建</a></p>` : ''}
+        <select id="collSelect"><option value="">不加入合集</option>${collOptions}</select>
+        ${myColls.length === 0 ? `<p style="font-size:13px;color:var(--text-3);margin-top:6px;">你还没有合集，<a href="#/collection/new" style="color:var(--primary);">点这里创建</a></p>` : ''}
       </div>
-
       <button class="submit-btn" id="submitBtn">${editing ? '保存修改' : '发布'}</button>
       <button class="btn-secondary" id="clearDraftBtn">清空草稿</button>
     </div>
@@ -2512,15 +2403,10 @@ function renderWrite(editId) {
       },
     },
   });
-
   if (editing) {
-    if (looksLikeHTML(editing.content)) {
-      quillEditor.clipboard.dangerouslyPasteHTML(editing.content);
-    } else {
-      quillEditor.setText(editing.content || '');
-    }
+    if (looksLikeHTML(editing.content)) quillEditor.clipboard.dangerouslyPasteHTML(editing.content);
+    else quillEditor.setText(editing.content || '');
   }
-
   bindTagChoiceEvents();
 
   const draft = loadDraft(currentDraftEditingId);
@@ -2537,28 +2423,14 @@ function renderWrite(editId) {
     document.getElementById('restoreDraftBtn').addEventListener('click', () => {
       if (draft.title !== undefined) document.getElementById('title').value = draft.title;
       if (draft.content !== undefined) quillEditor.root.innerHTML = draft.content;
-      if (draft.tags) {
-        selectedTags = draft.tags.slice();
-        const container = document.getElementById('tagChoices');
-        container.innerHTML = tagChoicesHTML();
-        bindTagChoiceEvents();
-      }
-      if (draft.cover) {
-        coverData = draft.cover;
-        document.getElementById('uploadBox').innerHTML = `<img src="${coverData}" alt="封面预览" />`;
-      }
-      if (draft.collectionId !== undefined) {
-        const sel = document.getElementById('collSelect');
-        sel.value = draft.collectionId ? String(draft.collectionId) : '';
-      }
-      bannerWrap.innerHTML = '';
-      showSync('草稿已恢复');
+      if (draft.tags) { selectedTags = draft.tags.slice(); const container = document.getElementById('tagChoices'); container.innerHTML = tagChoicesHTML(); bindTagChoiceEvents(); }
+      if (draft.cover) { coverData = draft.cover; document.getElementById('uploadBox').innerHTML = `<img src="${coverData}" alt="封面预览" />`; }
+      if (draft.collectionId !== undefined) { const sel = document.getElementById('collSelect'); sel.value = draft.collectionId ? String(draft.collectionId) : ''; }
+      bannerWrap.innerHTML = ''; showSync('草稿已恢复');
     });
     document.getElementById('discardDraftBtn').addEventListener('click', () => {
       if (!confirm('丢弃草稿后就找不回了，确定？')) return;
-      clearDraft(currentDraftEditingId);
-      bannerWrap.innerHTML = '';
-      showSync('草稿已丢弃');
+      clearDraft(currentDraftEditingId); bannerWrap.innerHTML = ''; showSync('草稿已丢弃');
     });
   }
 
@@ -2573,56 +2445,36 @@ function renderWrite(editId) {
       savedAt: new Date().toISOString(),
     };
     const contentText = extractTextFromHTML(contentHTML);
-    if (!titleVal.trim() && !contentText) {
-      try { localStorage.removeItem(currentDraftKey); } catch (e) {}
-      return;
-    }
+    if (!titleVal.trim() && !contentText) { try { localStorage.removeItem(currentDraftKey); } catch (e) {} return; }
     try {
       localStorage.setItem(currentDraftKey, JSON.stringify(draftData));
       const st = document.getElementById('draftStatus');
       if (st) st.textContent = '· 已自动保存 ' + new Date().toLocaleTimeString().slice(0, 5);
-    } catch (e) { console.warn('草稿保存失败', e); }
+    } catch (e) {}
   }
-  function scheduleAutosave() {
-    clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(doAutosave, 800);
-  }
-
+  function scheduleAutosave() { clearTimeout(autosaveTimer); autosaveTimer = setTimeout(doAutosave, 800); }
   quillEditor.on('text-change', scheduleAutosave);
   document.getElementById('title').addEventListener('input', scheduleAutosave);
   document.getElementById('collSelect').addEventListener('change', scheduleAutosave);
-
   const beforeUnloadHandler = () => { doAutosave(); };
   window.addEventListener('beforeunload', beforeUnloadHandler);
 
   const newTagInput = document.getElementById('newTagInput');
   const addTagBtn = document.getElementById('addTagBtn');
   const doAddTag = async () => {
-    const raw = newTagInput.value.trim();
-    if (!raw) return;
-    // 标签名审核
-    const chk = checkContent(raw);
-    if (!chk.ok) { showSensitiveError(chk.hits); return; }
+    const raw = newTagInput.value.trim(); if (!raw) return;
+    const chk = checkContent(raw); if (!chk.ok) { showSensitiveError(chk.hits); return; }
     addTagBtn.disabled = true; addTagBtn.textContent = '添加中…';
     try {
       const tag = await createTag(raw);
       if (!selectedTags.includes(tag.slug)) selectedTags.push(tag.slug);
-      const container = document.getElementById('tagChoices');
-      container.innerHTML = tagChoicesHTML();
-      bindTagChoiceEvents();
-      newTagInput.value = '';
-      scheduleAutosave();
-    } catch (err) {
-      console.error(err);
-      alert('创建标签失败：' + (err.message || '请重试'));
-    } finally {
-      addTagBtn.disabled = false; addTagBtn.textContent = '+ 添加';
-    }
+      const container = document.getElementById('tagChoices'); container.innerHTML = tagChoicesHTML(); bindTagChoiceEvents();
+      newTagInput.value = ''; scheduleAutosave();
+    } catch (err) { alert('创建标签失败：' + (err.message || '请重试')); }
+    finally { addTagBtn.disabled = false; addTagBtn.textContent = '+ 添加'; }
   };
   addTagBtn.addEventListener('click', doAddTag);
-  newTagInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); doAddTag(); }
-  });
+  newTagInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAddTag(); } });
 
   const uploadBox = document.getElementById('uploadBox');
   const fileInput = document.getElementById('fileInput');
@@ -2630,15 +2482,8 @@ function renderWrite(editId) {
   fileInput.addEventListener('change', async e => {
     const file = e.target.files[0]; if (!file) return;
     uploadBox.innerHTML = '<div class="hint">上传中…</div>';
-    try {
-      coverData = await uploadImage(file);
-      uploadBox.innerHTML = `<img src="${coverData}" alt="封面预览" />`;
-      scheduleAutosave();
-    } catch (err) {
-      console.error(err);
-      uploadBox.innerHTML = '<div class="hint">上传失败：' + escapeHTML(err.message || '请重试') + '</div>';
-      coverData = null;
-    }
+    try { coverData = await uploadImage(file); uploadBox.innerHTML = `<img src="${coverData}" alt="封面预览" />`; scheduleAutosave(); }
+    catch (err) { uploadBox.innerHTML = '<div class="hint">上传失败：' + escapeHTML(err.message || '请重试') + '</div>'; coverData = null; }
   });
 
   document.getElementById('clearDraftBtn').addEventListener('click', () => {
@@ -2654,24 +2499,15 @@ function renderWrite(editId) {
     const contentText = extractTextFromHTML(contentHTML);
     const collVal = document.getElementById('collSelect').value;
     const collectionId = collVal ? Number(collVal) : null;
-
     if (!title) return alert('请填写标题');
     if (!contentText) return alert('请填写正文');
     if (selectedTags.length === 0) return alert('请至少选择一个标签');
-
-    // ============ 内容审核 ============
-    const titleCheck = checkContent(title);
-    if (!titleCheck.ok) { showSensitiveError(titleCheck.hits); return; }
-    const contentCheck = checkContent(contentText);
-    if (!contentCheck.ok) { showSensitiveError(contentCheck.hits); return; }
+    const titleCheck = checkContent(title); if (!titleCheck.ok) { showSensitiveError(titleCheck.hits); return; }
+    const contentCheck = checkContent(contentText); if (!contentCheck.ok) { showSensitiveError(contentCheck.hits); return; }
     const excerpt = contentText.slice(0, 60) + (contentText.length > 60 ? '……' : '');
-
     if (editing) {
-      editing.title = title;
-      editing.content = contentHTML;
-      editing.excerpt = excerpt;
-      editing.tags = selectedTags.slice();
-      editing.collectionId = collectionId;
+      editing.title = title; editing.content = contentHTML; editing.excerpt = excerpt;
+      editing.tags = selectedTags.slice(); editing.collectionId = collectionId;
       if (coverData) editing.cover = coverData;
       await syncPost(editing);
       clearDraft(currentDraftEditingId);
@@ -2681,13 +2517,10 @@ function renderWrite(editId) {
       const newId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
       const newPost = {
         id: newId, title, excerpt, content: contentHTML,
-        author: displayName(),
-        tags: selectedTags.slice(),
+        author: displayName(), tags: selectedTags.slice(),
         cover: coverData || ('https://picsum.photos/seed/' + newId + '/600/400'),
         date: new Date().toISOString().slice(0, 10),
-        likes: 0, comments: [],
-        collectionId,
-        userId: currentUser.id,
+        likes: 0, comments: [], collectionId, userId: currentUser.id,
       };
       posts.push(newPost);
       await syncPost(newPost);
@@ -2701,14 +2534,13 @@ function renderWrite(editId) {
 /* ============ 路由 ============ */
 function router() {
   if (!loaded) return;
-
   const hash = location.hash || '#/';
   const parts = hash.slice(2).split('/');
   if (parts[0] !== 'write' && parts[0] !== 'edit') {
-    currentDraftKey = null;
-    currentDraftEditingId = null;
-    clearTimeout(autosaveTimer);
+    currentDraftKey = null; currentDraftEditingId = null; clearTimeout(autosaveTimer);
   }
+  // 路由切换时清理目录滚动监听
+  cleanupTOC();
 
   renderHeader();
 
@@ -2748,13 +2580,7 @@ async function init() {
     if (currentUser) startPolling();
   } catch (e) {
     console.error(e);
-    app.innerHTML = `
-      <div class="container">
-        <div class="empty">
-          <p style="color:#e33;font-size:16px;margin-bottom:12px;">连接数据库失败</p>
-          <p style="font-size:13px;color:var(--text-3);">${escapeHTML(e.message || e)}</p>
-        </div>
-      </div>`;
+    app.innerHTML = `<div class="container"><div class="empty"><p style="color:#e33;font-size:16px;margin-bottom:12px;">连接数据库失败</p><p style="font-size:13px;color:var(--text-3);">${escapeHTML(e.message || e)}</p></div></div>`;
   }
 }
 
