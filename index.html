@@ -57,13 +57,8 @@
     height: 16px; line-height: 16px; text-align: center;
     font-weight: bold;
   }
-  .notif-badge.pulse {
-    animation: pulse .8s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-  }
+  .notif-badge.pulse { animation: pulse .8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
   .write-btn {
     padding: 8px 16px; background: var(--primary); color: #fff;
     border-radius: 999px; text-decoration: none; font-size: 13px;
@@ -102,13 +97,9 @@
   .mobile-nav a {
     flex: 1;
     display: flex; flex-direction: column; align-items: center;
-    gap: 2px;
-    padding: 6px 0;
-    text-decoration: none;
-    color: var(--text-3);
-    font-size: 11px;
-    transition: color .2s;
-    position: relative;
+    gap: 2px; padding: 6px 0;
+    text-decoration: none; color: var(--text-3); font-size: 11px;
+    transition: color .2s; position: relative;
   }
   .mobile-nav a.active { color: var(--primary); }
   .mobile-nav a .mnav-icon { font-size: 20px; line-height: 1; }
@@ -116,8 +107,7 @@
     background: var(--primary); color: #fff;
     width: 40px; height: 40px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    margin-top: -14px;
+    font-size: 18px; margin-top: -14px;
     box-shadow: 0 4px 12px rgba(255,92,92,.4);
   }
   .mobile-nav a.mnav-write span:last-child { margin-top: 2px; }
@@ -245,8 +235,7 @@
   }
   .comment-item .c-head .c-author-name { color: var(--text-2); }
   .comment-item .c-actions {
-    margin-left: auto; display: flex; gap: 10px;
-    font-size: 12px;
+    margin-left: auto; display: flex; gap: 10px; font-size: 12px;
   }
   .comment-item .c-actions span { cursor: pointer; color: var(--text-3); }
   .comment-item .c-actions span:hover { color: var(--primary); }
@@ -325,6 +314,8 @@
   .collection-header .ch-desc { color: var(--text-2); font-size: 14px; margin-bottom: 12px; }
   .collection-header .ch-meta { color: var(--text-3); font-size: 13px; margin-bottom: 12px; }
   .danger-text { color: #e33; font-size: 13px; cursor: pointer; text-decoration: underline; }
+  .report-text { color: var(--text-3); font-size: 13px; cursor: pointer; text-decoration: underline; }
+  .report-text:hover { color: #e33; }
   .modal-mask {
     position: fixed; inset: 0; background: rgba(0,0,0,.45);
     display: flex; align-items: center; justify-content: center;
@@ -352,6 +343,13 @@
   .coll-option-name { font-size: 15px; color: var(--text); margin-bottom: 2px; }
   .coll-option-meta { font-size: 12px; color: var(--text-3); }
   .modal-actions { display: flex; gap: 8px; justify-content: space-between; }
+  .report-reasons { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .report-reason {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+    cursor: pointer; font-size: 14px; transition: all .2s;
+  }
+  .report-reason:hover { border-color: var(--primary); }
+  .report-reason.selected { border-color: var(--primary); background: rgba(255,92,92,.06); }
   .loading-screen {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 120px 20px; color: var(--text-3); gap: 16px;
@@ -373,8 +371,6 @@
   }
   .sync-status.show { opacity: 1; }
   .sync-status.error { color: #e33; border-color: #e33; }
-
-  /* 实时通知 toast */
   .toast-notif {
     position: fixed; top: 76px; right: 16px;
     background: var(--primary); color: #fff;
@@ -392,7 +388,6 @@
   @media (max-width: 768px) {
     .toast-notif { top: auto; bottom: 90px; left: 16px; right: 16px; justify-content: center; }
   }
-
   .auth-card {
     max-width: 400px; margin: 60px auto;
     background: var(--card); border: 1px solid var(--border);
@@ -512,9 +507,7 @@
     display: flex; gap: 12px; align-items: center;
     background: rgba(255,92,92,.08);
     border: 1px solid rgba(255,92,92,.3);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;
     font-size: 14px;
   }
   .draft-banner .draft-msg { flex: 1; color: var(--text-2); }
@@ -537,10 +530,8 @@
   .ql-container.ql-snow {
     border-radius: 0 0 12px 12px;
     border-color: var(--border);
-    font-size: 15px;
-    font-family: inherit;
-    background: var(--card);
-    color: var(--text);
+    font-size: 15px; font-family: inherit;
+    background: var(--card); color: var(--text);
   }
   .ql-editor { min-height: 320px; font-family: inherit; font-size: 15px; line-height: 1.75; color: var(--text); }
   .ql-editor img { max-width: 100%; border-radius: 8px; }
@@ -594,12 +585,48 @@ const SUPABASE_URL = 'https://rkrroshmqxzuqyilggjm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_-uNERFSmoVIUo1j4DO6cPw_9zpCGKwZ';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let tags = [];
-let allUsers = [];
-let usersByName = {};
+// ==================== 敏感词库 ====================
+// 这是一个示例词库，你需要根据自己社区的性质自行扩充。
+// 只放一些通用的广告词、脏话示例，不涉及具体行业和地区。
+const SENSITIVE_WORDS = [
+  // 广告类
+  '加微信', '加vx', '加VX', '加qq', '加QQ', '扫码加', '私聊我', '私信我',
+  '出售', '代购', '刷单', '兼职', '日入', '月入过万', '躺赚', '返利',
+  '点击链接', '点击领取', '免费领取', '领取红包', '优惠券群',
+  // 联系方式类
+  'V信', '威信', 'weixin', '微信：', 'QQ：', 'Q群',
+  // 通用脏话（示例，自行扩充）
+  '傻逼', '煞笔', '沙比', '草泥马', '操你', '日你',
+  // 你需要自己加更多
+];
+
+// 简短显示敏感词（中间打码）
+function maskWord(w) {
+  if (!w || w.length <= 1) return w;
+  if (w.length === 2) return w[0] + '*';
+  return w[0] + '*'.repeat(w.length - 2) + w[w.length - 1];
+}
+
+// 检查文本，返回 { ok: bool, hits: string[] }
+function checkContent(text) {
+  if (!text) return { ok: true, hits: [] };
+  const lower = String(text).toLowerCase();
+  const hits = [];
+  for (const w of SENSITIVE_WORDS) {
+    if (lower.includes(w.toLowerCase())) hits.push(w);
+  }
+  return { ok: hits.length === 0, hits };
+}
+
+// 显示拦截提示
+function showSensitiveError(hits) {
+  const masked = hits.slice(0, 5).map(maskWord).join('、');
+  const extra = hits.length > 5 ? ' 等 ' + hits.length + ' 处' : '';
+  alert('内容包含不允许的词汇：' + masked + extra + '\n\n请修改后再试。');
+}
 
 // ==================== 实时通知（轮询） ====================
-const POLL_INTERVAL = 30000; // 30 秒
+const POLL_INTERVAL = 30000;
 let pollTimer = null;
 let pollPaused = false;
 
@@ -608,14 +635,9 @@ function startPolling() {
   if (!currentUser) return;
   pollTimer = setInterval(checkNewNotifications, POLL_INTERVAL);
 }
-
 function stopPolling() {
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
-  }
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
-
 async function checkNewNotifications() {
   if (!currentUser || !loaded || pollPaused) return;
   try {
@@ -632,24 +654,18 @@ async function checkNewNotifications() {
       myUnreadCount = newCount;
       renderHeader();
       showNewNotifToast(diff);
-      // 如果在通知页，直接刷新
       if (currentRoute() === 'notifications') {
         await reloadNotifications();
         renderNotifications();
       } else {
-        // 后台预加载通知列表
         reloadNotifications().catch(() => {});
       }
     } else if (newCount < myUnreadCount) {
-      // 别的标签页标记了已读
       myUnreadCount = newCount;
       renderHeader();
     }
-  } catch (e) {
-    console.warn('轮询异常', e);
-  }
+  } catch (e) { console.warn('轮询异常', e); }
 }
-
 async function reloadNotifications() {
   if (!currentUser) return;
   const uid = String(currentUser.id);
@@ -661,33 +677,22 @@ async function reloadNotifications() {
   myNotifications = (data || []).map(rowToNotif);
   myUnreadCount = myNotifications.filter(n => !n.isRead).length;
 }
-
 function showNewNotifToast(diff) {
-  // 移除已有的
   document.querySelectorAll('.toast-notif').forEach(el => el.remove());
   const el = document.createElement('div');
   el.className = 'toast-notif';
   el.innerHTML = `<span>🔔</span><span>你有 ${diff} 条新通知</span>`;
-  el.addEventListener('click', () => {
-    location.hash = '#/notifications';
-    el.remove();
-  });
+  el.addEventListener('click', () => { location.hash = '#/notifications'; el.remove(); });
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 6000);
 }
-
-// 页面切换时暂停/恢复
 document.addEventListener('visibilitychange', () => {
   pollPaused = document.hidden;
-  if (!document.hidden && currentUser) {
-    checkNewNotifications();
-  }
+  if (!document.hidden && currentUser) checkNewNotifications();
 });
 
 // ==================== 富文本工具 ====================
-function looksLikeHTML(s) {
-  return /<[a-z][\s\S]*>/i.test(s || '');
-}
+function looksLikeHTML(s) { return /<[a-z][\s\S]*>/i.test(s || ''); }
 function sanitizeHTML(html) {
   if (!html) return '';
   if (window.DOMPurify) {
@@ -760,7 +765,6 @@ async function registerUser(loginName, dispName, password) {
   if (error) throw error;
   return data;
 }
-
 async function loginUser(loginName, password) {
   const passwordHash = await hashPassword(password);
   const { data, error } = await supabase.from('app_users').select('*').eq('login_name', loginName).maybeSingle();
@@ -780,6 +784,7 @@ let myFavorites = new Set();
 let followedAuthors = new Set();
 let myNotifications = [];
 let myUnreadCount = 0;
+let myReports = new Set(); // 记录"我举报过的" post id，避免重复弹窗
 
 function saveFollows() { localStorage.setItem('my_followed_tags', JSON.stringify(followedTags)); }
 function saveLikes() { localStorage.setItem('my_likes', JSON.stringify(myLikes)); }
@@ -874,11 +879,15 @@ async function loadAll() {
       .limit(100);
     myNotifications = (nData || []).map(rowToNotif);
     myUnreadCount = myNotifications.filter(n => !n.isRead).length;
+    // 我举报过的
+    const { data: rData } = await supabase.from('reports').select('post_id').eq('reporter_id', uid);
+    myReports = new Set((rData || []).map(r => r.post_id));
   } else {
     myFavorites = new Set();
     followedAuthors = new Set();
     myNotifications = [];
     myUnreadCount = 0;
+    myReports = new Set();
   }
 
   loaded = true;
@@ -889,12 +898,8 @@ async function createNotification({ userId, type, postId, postTitle, content }) 
   if (!userId) return;
   if (String(userId) === String(currentUser.id)) return;
   const { error } = await supabase.from('notifications').insert({
-    user_id: String(userId),
-    actor_name: displayName(),
-    type,
-    post_id: postId || null,
-    post_title: postTitle || null,
-    content: content || null,
+    user_id: String(userId), actor_name: displayName(), type,
+    post_id: postId || null, post_title: postTitle || null, content: content || null,
   });
   if (error) console.error('通知创建失败：', error);
 }
@@ -992,6 +997,27 @@ async function toggleFollowAuthor(name) {
     const targetId = findUserIdByName(name);
     if (targetId) await createNotification({ userId: targetId, type: 'follow' });
   }
+}
+
+// 举报
+async function submitReport(post, reason) {
+  if (!currentUser) return;
+  const uid = String(currentUser.id);
+  const { error } = await supabase.from('reports').insert({
+    reporter_id: uid,
+    reporter_name: displayName(),
+    post_id: post.id,
+    post_title: post.title,
+    post_author: post.author,
+    reason: reason,
+  });
+  if (error) {
+    if (/duplicate|unique/i.test(error.message)) {
+      throw new Error('你已经举报过这篇文章了');
+    }
+    throw error;
+  }
+  myReports.add(post.id);
 }
 
 // ==================== 草稿 ====================
@@ -1222,7 +1248,6 @@ function compressImageToBlob(file, maxWidth, quality) {
     reader.readAsDataURL(file);
   });
 }
-
 async function uploadImage(file) {
   if (!currentUser) throw new Error('请先登录');
   const blob = await compressImageToBlob(file, 1200, 0.85);
@@ -1235,7 +1260,6 @@ async function uploadImage(file) {
   return publicUrl;
 }
 async function uploadAvatar(file) { return await uploadImage(file); }
-
 async function saveAvatar(url) {
   const { error } = await supabase.from('app_users').update({ avatar: url }).eq('id', currentUser.id);
   if (error) throw error;
@@ -1324,6 +1348,14 @@ function renderRegister() {
     if (!displayNameVal) { errBox.innerHTML = '<div class="auth-error">请填写显示名</div>'; return; }
     if (!/^[a-z0-9_]{3,20}$/.test(loginNameVal)) { errBox.innerHTML = '<div class="auth-error">登录名只能是 3-20 位小写字母、数字或下划线</div>'; return; }
     if (password.length < 6) { errBox.innerHTML = '<div class="auth-error">密码至少 6 位</div>'; return; }
+
+    // 昵称审核
+    const nameCheck = checkContent(displayNameVal);
+    if (!nameCheck.ok) {
+      errBox.innerHTML = `<div class="auth-error">昵称包含不允许的词汇，请换一个</div>`;
+      return;
+    }
+
     const btn = document.getElementById('registerBtn');
     btn.disabled = true; btn.textContent = '注册中…';
     try {
@@ -1342,7 +1374,6 @@ function renderRegister() {
 /* ============ 通知页面 ============ */
 function renderNotifications() {
   if (!requireLogin('请先登录')) return;
-
   if (myNotifications.length === 0) {
     app.innerHTML = `
       <div class="container">
@@ -1358,21 +1389,12 @@ function renderNotifications() {
   const listHTML = shown.map(n => {
     const time = formatRelativeTime(n.createdAt);
     const actorAvatar = avatarHTML(n.actorName, 36);
-    let actionText = '';
-    let link = '#/';
-    if (n.type === 'like') {
-      actionText = `点赞了你的文章《${escapeHTML(n.postTitle || '')}》`;
-      link = n.postId ? '#/post/' + n.postId : '#/';
-    } else if (n.type === 'comment') {
-      actionText = `评论了你的文章《${escapeHTML(n.postTitle || '')}》`;
-      link = n.postId ? '#/post/' + n.postId : '#/';
-    } else if (n.type === 'favorite') {
-      actionText = `收藏了你的文章《${escapeHTML(n.postTitle || '')}》`;
-      link = n.postId ? '#/post/' + n.postId : '#/';
-    } else if (n.type === 'follow') {
-      actionText = `关注了你`;
-      link = '#/user/' + encodeURIComponent(n.actorName);
-    }
+    let actionText = '', link = '#/';
+    if (n.type === 'like') { actionText = `点赞了你的文章《${escapeHTML(n.postTitle || '')}》`; link = n.postId ? '#/post/' + n.postId : '#/'; }
+    else if (n.type === 'comment') { actionText = `评论了你的文章《${escapeHTML(n.postTitle || '')}》`; link = n.postId ? '#/post/' + n.postId : '#/'; }
+    else if (n.type === 'favorite') { actionText = `收藏了你的文章《${escapeHTML(n.postTitle || '')}》`; link = n.postId ? '#/post/' + n.postId : '#/'; }
+    else if (n.type === 'follow') { actionText = `关注了你`; link = '#/user/' + encodeURIComponent(n.actorName); }
+
     const unreadClass = n.isRead ? '' : 'unread';
     const dot = n.isRead ? '' : '<span class="notif-dot"></span>';
     return `
@@ -1856,9 +1878,7 @@ function renderUser(name) {
   const followBtn = !isMe && currentUser
     ? `<button class="follow-btn ${isFollowing ? 'followed' : ''}" id="followAuthorBtn">${isFollowing ? '已关注' : '+ 关注'}</button>`
     : '';
-  const loginHint = !currentUser
-    ? `<a href="#/login" class="mini-btn">登录后可关注</a>`
-    : '';
+  const loginHint = !currentUser ? `<a href="#/login" class="mini-btn">登录后可关注</a>` : '';
 
   const avatarBlock = avatarURL(decoded)
     ? `<img class="me-avatar" src="${avatarURL(decoded)}" alt="" />`
@@ -2017,6 +2037,11 @@ function renderCollectionEdit(editId) {
     const desc = document.getElementById('collDesc').value.trim();
     if (!name) return alert('请填写合集名称');
 
+    const nameCheck = checkContent(name);
+    if (!nameCheck.ok) { showSensitiveError(nameCheck.hits); return; }
+    const descCheck = checkContent(desc);
+    if (!descCheck.ok) { showSensitiveError(descCheck.hits); return; }
+
     if (editing) {
       editing.name = name; editing.desc = desc;
       if (collectionCoverData) editing.cover = collectionCoverData;
@@ -2084,6 +2109,58 @@ function showCollectionPicker(p) {
   modal.querySelector('#createCollBtn').addEventListener('click', () => modal.remove());
 }
 
+// 举报弹窗
+function showReportDialog(post) {
+  if (!currentUser) { alert('请先登录'); location.hash = '#/login'; return; }
+  if (String(post.userId) === String(currentUser.id)) { alert('不能举报自己的文章'); return; }
+  if (myReports.has(post.id)) { alert('你已经举报过这篇文章了，我们会尽快处理'); return; }
+
+  const reasons = ['垃圾广告', '色情低俗', '人身攻击', '虚假信息', '侵犯版权', '其他'];
+  const modal = document.createElement('div');
+  modal.className = 'modal-mask';
+  modal.innerHTML = `
+    <div class="modal">
+      <h3>举报文章</h3>
+      <p class="modal-sub">请选择举报原因。恶意举报会导致你的账号被限制。</p>
+      <div class="report-reasons" id="reportReasons">
+        ${reasons.map(r => `<div class="report-reason" data-reason="${r}">${r}</div>`).join('')}
+      </div>
+      <div class="modal-actions">
+        <button class="mini-btn primary" id="reportSubmitBtn" disabled>提交举报</button>
+        <button class="mini-btn" id="reportCancelBtn">取消</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  let selectedReason = '';
+  const submitBtn = modal.querySelector('#reportSubmitBtn');
+  modal.querySelectorAll('.report-reason').forEach(el => {
+    el.addEventListener('click', () => {
+      modal.querySelectorAll('.report-reason').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedReason = el.dataset.reason;
+      submitBtn.disabled = false;
+    });
+  });
+
+  submitBtn.addEventListener('click', async () => {
+    if (!selectedReason) return;
+    submitBtn.disabled = true; submitBtn.textContent = '提交中…';
+    try {
+      await submitReport(post, selectedReason);
+      modal.remove();
+      showSync('举报已提交，我们会尽快处理');
+    } catch (err) {
+      alert(err.message || '提交失败，请重试');
+      submitBtn.disabled = false; submitBtn.textContent = '提交举报';
+    }
+  });
+
+  modal.querySelector('#reportCancelBtn').addEventListener('click', () => modal.remove());
+}
+
 function renderPost(id) {
   const p = posts.find(x => x.id === Number(id));
   if (!p) { app.innerHTML = `<div class="container"><p class="empty">文章不存在</p></div>`; return; }
@@ -2135,10 +2212,12 @@ function renderPost(id) {
     : `<p style="color:var(--text-3);font-size:14px;margin-top:12px;"><a href="#/login" style="color:var(--primary);">登录</a> 后可以评论</p>`;
 
   const authorAvatar = avatarHTML(p.author, 40);
-
   const contentDisplay = looksLikeHTML(p.content)
     ? sanitizeHTML(p.content)
     : escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>');
+
+  const reportBtn = !isMine && currentUser
+    ? `<span class="report-text" id="reportPostBtn">举报这篇文章</span>` : '';
 
   app.innerHTML = `
     <div class="container">
@@ -2163,6 +2242,7 @@ function renderPost(id) {
         ${isMine ? `<button class="action-btn" id="editBtn">编辑</button>` : ''}
         ${isMine ? `<button class="action-btn danger" id="deleteBtn">删除文章</button>` : ''}
       </div>
+      <div style="text-align:right;margin-top:-16px;margin-bottom:8px;">${reportBtn}</div>
 
       <div class="comments">
         <h2 style="margin-top:0;">评论 (${p.comments.length})</h2>
@@ -2171,6 +2251,10 @@ function renderPost(id) {
       </div>
     </div>
   `;
+
+  // 举报按钮
+  const reportBtnEl = document.getElementById('reportPostBtn');
+  if (reportBtnEl) reportBtnEl.addEventListener('click', () => showReportDialog(p));
 
   document.getElementById('likeBtn').addEventListener('click', async () => {
     const wasLiked = myLikes.includes(p.id);
@@ -2252,6 +2336,8 @@ function renderPost(id) {
         const save = async () => {
           const newVal = input.value.trim();
           if (!newVal) { alert('评论不能为空'); return; }
+          const chk = checkContent(newVal);
+          if (!chk.ok) { showSensitiveError(chk.hits); return; }
           c.content = newVal;
           renderPost(p.id);
           await syncPost(p);
@@ -2272,6 +2358,8 @@ function renderPost(id) {
       const input = document.getElementById('commentInput');
       const content = input.value.trim();
       if (!content) return;
+      const chk = checkContent(content);
+      if (!chk.ok) { showSensitiveError(chk.hits); return; }
       p.comments.push({ id: Date.now(), author: currentName, content, date: new Date().toISOString().slice(0, 10) });
       if (p.userId && currentUser) {
         await createNotification({
@@ -2287,7 +2375,7 @@ function renderPost(id) {
   }
 }
 
-/* ============ 写 / 编辑文章（Quill + 草稿） ============ */
+/* ============ 写 / 编辑文章 ============ */
 let selectedTags = [];
 let coverData = null;
 let quillEditor = null;
@@ -2480,11 +2568,8 @@ function renderWrite(editId) {
     const contentHTML = quillEditor.root.innerHTML;
     const collVal = document.getElementById('collSelect').value;
     const draftData = {
-      title: titleVal,
-      content: contentHTML,
-      tags: selectedTags.slice(),
-      cover: coverData,
-      collectionId: collVal ? Number(collVal) : null,
+      title: titleVal, content: contentHTML, tags: selectedTags.slice(),
+      cover: coverData, collectionId: collVal ? Number(collVal) : null,
       savedAt: new Date().toISOString(),
     };
     const contentText = extractTextFromHTML(contentHTML);
@@ -2496,11 +2581,8 @@ function renderWrite(editId) {
       localStorage.setItem(currentDraftKey, JSON.stringify(draftData));
       const st = document.getElementById('draftStatus');
       if (st) st.textContent = '· 已自动保存 ' + new Date().toLocaleTimeString().slice(0, 5);
-    } catch (e) {
-      console.warn('草稿保存失败', e);
-    }
+    } catch (e) { console.warn('草稿保存失败', e); }
   }
-
   function scheduleAutosave() {
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(doAutosave, 800);
@@ -2518,6 +2600,9 @@ function renderWrite(editId) {
   const doAddTag = async () => {
     const raw = newTagInput.value.trim();
     if (!raw) return;
+    // 标签名审核
+    const chk = checkContent(raw);
+    if (!chk.ok) { showSensitiveError(chk.hits); return; }
     addTagBtn.disabled = true; addTagBtn.textContent = '添加中…';
     try {
       const tag = await createTag(raw);
@@ -2574,6 +2659,11 @@ function renderWrite(editId) {
     if (!contentText) return alert('请填写正文');
     if (selectedTags.length === 0) return alert('请至少选择一个标签');
 
+    // ============ 内容审核 ============
+    const titleCheck = checkContent(title);
+    if (!titleCheck.ok) { showSensitiveError(titleCheck.hits); return; }
+    const contentCheck = checkContent(contentText);
+    if (!contentCheck.ok) { showSensitiveError(contentCheck.hits); return; }
     const excerpt = contentText.slice(0, 60) + (contentText.length > 60 ? '……' : '');
 
     if (editing) {
@@ -2590,9 +2680,7 @@ function renderWrite(editId) {
     } else {
       const newId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
       const newPost = {
-        id: newId, title,
-        excerpt,
-        content: contentHTML,
+        id: newId, title, excerpt, content: contentHTML,
         author: displayName(),
         tags: selectedTags.slice(),
         cover: coverData || ('https://picsum.photos/seed/' + newId + '/600/400'),
