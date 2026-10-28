@@ -3,7 +3,29 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>我的创作社区</title>
+<title>拾光小天地</title>
+
+<!-- ==================== SEO 与分享卡片 ==================== -->
+<meta name="description" content="拾光小天地是一个图文创作社区，在这里发布文章、分享作品、发现好内容。" />
+
+<!-- Open Graph (Facebook, Discord, 微信等) -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="拾光小天地" />
+<meta property="og:description" content="一个图文创作社区，在这里发布文章、分享作品、发现好内容。" />
+<meta property="og:image" content="https://你的GitHub用户名.github.io/你的仓库名/og.png" />
+<meta property="og:url" content="https://你的GitHub用户名.github.io/你的仓库名/" />
+<meta property="og:site_name" content="拾光小天地" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="拾光小天地" />
+<meta name="twitter:description" content="一个图文创作社区，在这里发布文章、分享作品、发现好内容。" />
+<meta name="twitter:image" content="https://你的GitHub用户名.github.io/你的仓库名/og.png" />
+
+<!-- Google Search Console 验证（拿到验证代码后，取消注释并填入） -->
+<!-- <meta name="google-site-verification" content="这里填Google给你的验证码" /> -->
+<!-- ======================================================== -->
+
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
@@ -706,7 +728,7 @@
 
 <div class="header">
   <div class="container">
-    <a href="#/" class="logo">我的创作社区</a>
+    <a href="#/" class="logo">拾光小天地</a>
     <nav class="main-nav" id="mainNav"></nav>
     <div class="nav-right" id="navRight"></div>
   </div>
@@ -755,28 +777,20 @@ const KEY_HIDDEN = 'my_hidden_posts';
 let hiddenPosts = new Set(JSON.parse(localStorage.getItem(KEY_HIDDEN) || '[]'));
 function saveHiddenPosts() {
   try {
-    // localStorage 里 Set 不能直接存，转成数组
     localStorage.setItem(KEY_HIDDEN, JSON.stringify(Array.from(hiddenPosts)));
   } catch (e) {}
 }
 function hidePost(postId, btnEl) {
   hiddenPosts.add(postId);
   saveHiddenPosts();
-  // 淡出移除
   const card = btnEl ? btnEl.closest('.post') : null;
   if (card) {
     card.classList.add('dismissed');
     setTimeout(() => {
       card.remove();
-      // 检查当前容器是否已空，显示提示
-      const containers = document.querySelectorAll('#app .post');
-      if (containers.length === 0) {
-        // 不强制重渲染，用户刷新即可
-      }
     }, 260);
   }
   showSync('已隐藏，可在「我的」页面恢复');
-  // 更新我的页面里的隐藏数量（如果正在看）
   if (currentRoute() === 'me' && meTab === 'hidden') renderMe();
 }
 function unhidePost(postId) {
@@ -784,7 +798,6 @@ function unhidePost(postId) {
   saveHiddenPosts();
   showSync('已恢复显示');
 }
-// 过滤掉隐藏的文章（自己的文章例外，无论如何都显示）
 function visiblePosts(list) {
   return list.filter(p => {
     if (!hiddenPosts.has(p.id)) return true;
@@ -1434,7 +1447,6 @@ async function saveAvatar(url) {
 
 // ==================== 「不感兴趣」弹窗 ====================
 function showPostMenu(postId, btnEl) {
-  // 关闭已有的
   document.querySelectorAll('.post-menu-popup').forEach(el => el.remove());
   const popup = document.createElement('div');
   popup.className = 'post-menu-popup';
@@ -1443,7 +1455,6 @@ function showPostMenu(postId, btnEl) {
   `;
   document.body.appendChild(popup);
 
-  // 定位到按钮下方
   const rect = btnEl.getBoundingClientRect();
   const popupWidth = 140;
   let left = rect.right - popupWidth;
@@ -1453,7 +1464,6 @@ function showPostMenu(postId, btnEl) {
   popup.style.left = left + 'px';
   popup.style.top = top + 'px';
 
-  // 点击外部关闭
   const closeAll = (e) => {
     if (!popup.contains(e.target)) {
       popup.remove();
@@ -1720,7 +1730,6 @@ function renderHome() {
         p.tags.some(s => { const t = tags.find(x => x.slug === s); return t && (t.name.toLowerCase().includes(kw) || s.toLowerCase().includes(kw)); });
     });
   }
-  // 过滤已隐藏
   list = visiblePosts(list);
   if (homeSort === 'hot') list.sort((a, b) => (b.likes + b.comments.length * 2) - (a.likes + a.comments.length * 2));
   else list.sort((a, b) => b.id - a.id);
@@ -1928,7 +1937,6 @@ function renderMe() {
   document.querySelectorAll('.tab[data-me]').forEach(el => el.addEventListener('click', () => {
     meTab = el.dataset.me; meVisible = PAGE_SIZE; meFavVisible = PAGE_SIZE; renderMe();
   }));
-  // 恢复按钮
   document.querySelectorAll('[data-restore]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
