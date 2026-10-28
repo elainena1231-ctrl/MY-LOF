@@ -12,19 +12,14 @@
 <meta property="og:type" content="website" />
 <meta property="og:title" content="拾光小天地" />
 <meta property="og:description" content="一个图文创作社区，在这里发布文章、分享作品、发现好内容。" />
-<meta property="og:image" content="https://你的GitHub用户名.github.io/你的仓库名/og.png" />
-<meta property="og:url" content="https://你的GitHub用户名.github.io/你的仓库名/" />
+<meta property="og:image" content="og.png" />
 <meta property="og:site_name" content="拾光小天地" />
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="拾光小天地" />
 <meta name="twitter:description" content="一个图文创作社区，在这里发布文章、分享作品、发现好内容。" />
-<meta name="twitter:image" content="https://你的GitHub用户名.github.io/你的仓库名/og.png" />
-
-<!-- Google Search Console 验证（拿到验证代码后，取消注释并填入） -->
-<!-- <meta name="google-site-verification" content="这里填Google给你的验证码" /> -->
-<!-- ======================================================== -->
+<meta name="twitter:image" content="og.png" />
 
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
@@ -742,8 +737,11 @@
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// ========== 填入你的 Supabase 信息 ==========
 const SUPABASE_URL = 'https://rkrroshmqxzuqyilggjm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_-uNERFSmoVIUo1j4DO6cPw_9zpCGKwZ';
+// ==================================================
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ==================== 敏感词库 ====================
