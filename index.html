@@ -703,6 +703,18 @@
   body.dark .ql-snow .ql-tooltip { background: var(--card); border-color: var(--border); color: var(--text); }
   body.dark .ql-snow .ql-tooltip input[type=text] { background: var(--hover-bg); border-color: var(--border); color: var(--text); }
 
+  /* 新增：个人简介样式 */
+  .bio-text {
+    font-size: 14px; color: var(--text-2); margin-top: 6px;
+    background: var(--hover-bg); padding: 10px 14px;
+    border-radius: 8px; border-left: 3px solid var(--primary);
+    max-width: 600px; line-height: 1.5;
+  }
+  .edit-bio-btn {
+    font-size: 13px; color: var(--primary); cursor: pointer;
+    text-decoration: underline; margin-top: 6px; display: inline-block;
+  }
+
   @media (max-width: 900px) {
     .toc-sidebar { display: none; }
     .toc-mobile-btn { display: inline-block; }
@@ -981,7 +993,8 @@ function collToRow(c) {
   return { id: c.id, name: c.name, desc_text: c.desc, author: c.author, cover: c.cover, date: c.date, user_id: c.userId ? String(c.userId) : null };
 }
 function rowToTag(r) { return { id: r.id, slug: r.slug, name: r.name, desc: r.description || '' }; }
-function rowToUser(r) { return { id: r.id, loginName: r.login_name, displayName: r.display_name, avatar: r.avatar || null }; }
+// 新增 bio 字段
+function rowToUser(r) { return { id: r.id, loginName: r.login_name, displayName: r.display_name, avatar: r.avatar || null, bio: r.bio || '' }; }
 function rowToNotif(r) {
   return {
     id: r.id, actorName: r.actor_name, type: r.type,
@@ -1001,7 +1014,8 @@ async function loadAll() {
   if (cErr) throw cErr;
   const { data: tData, error: tErr } = await supabase.from('tags').select('*').order('id', { ascending: true });
   if (tErr) throw tErr;
-  const { data: uData, error: uErr } = await supabase.from('app_users').select('id, login_name, display_name, avatar');
+  // 读取 bio 字段
+  const { data: uData, error: uErr } = await supabase.from('app_users').select('id, login_name, display_name, avatar, bio');
   if (uErr) throw uErr;
 
   posts = (pData || []).map(rowToPost);
@@ -1012,7 +1026,12 @@ async function loadAll() {
 
   if (currentUser) {
     const me = allUsers.find(u => String(u.id) === String(currentUser.id));
-    if (me) { currentUser.avatar = me.avatar; currentUser.displayName = me.displayName; saveUser(currentUser); }
+    if (me) { 
+      currentUser.avatar = me.avatar; 
+      currentUser.displayName = me.displayName; 
+      currentUser.bio = me.bio; // 同步 bio
+      saveUser(currentUser); 
+    }
   }
   posts.forEach(p => {
     if (p.collectionId && !collections.find(c => c.id === p.collectionId)) p.collectionId = null;
@@ -1393,12 +1412,14 @@ function userCardHTML(name) {
   const postCount = posts.filter(p => p.author === name).length;
   const likes = posts.filter(p => p.author === name).reduce((s, p) => s + (p.likes || 0), 0);
   const avatarBlock = avatarURLValue ? `<img class="uc-avatar" src="${avatarURLValue}" alt="" />` : `<div class="uc-avatar">${escapeHTML((name || '?')[0])}</div>`;
+  const bio = u && u.bio ? u.bio : '';
   return `
     <a class="user-card" href="#/user/${encodeURIComponent(name)}">
       ${avatarBlock}
       <div class="uc-info">
         <div class="uc-name">👤 ${escapeHTML(name)}</div>
         <div class="uc-meta">${postCount} 篇文章 · ${likes} 个赞</div>
+        ${bio ? `<div style="font-size:12px;color:var(--text-2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(bio)}</div>` : ''}
       </div>
     </a>
   `;
@@ -1447,50 +1468,16 @@ async function saveAvatar(url) {
   rebuildUsersByName();
 }
 
-// ==================== 「不感兴趣」弹窗 ====================
-function showPostMenu(postId, btnEl) {
-  document.querySelectorAll('.post-menu-popup').forEach(el => el.remove());
-  const popup = document.createElement('div');
-  popup.className = 'post-menu-popup';
-  popup.innerHTML = `
-    <div class="pm-item" data-action="hide">🚫 不感兴趣</div>
-  `;
-  document.body.appendChild(popup);
-
-  const rect = btnEl.getBoundingClientRect();
-  const popupWidth = 140;
-  let left = rect.right - popupWidth;
-  let top = rect.bottom + 4;
-  if (left < 8) left = 8;
-  if (top + 50 > window.innerHeight) top = rect.top - 44;
-  popup.style.left = left + 'px';
-  popup.style.top = top + 'px';
-
-  const closeAll = (e) => {
-    if (!popup.contains(e.target)) {
-      popup.remove();
-      document.removeEventListener('click', closeAll, true);
-    }
-  };
-  setTimeout(() => document.addEventListener('click', closeAll, true), 0);
-
-  popup.querySelector('[data-action="hide"]').addEventListener('click', (e) => {
-    e.stopPropagation();
-    popup.remove();
-    document.removeEventListener('click', closeAll, true);
-    hidePost(postId, btnEl);
-  });
+// 新增：保存个人简介
+async function saveBio(text) {
+  const { error } = await supabase.from('app_users').update({ bio: text }).eq('id', currentUser.id);
+  if (error) throw error;
+  currentUser.bio = text;
+  saveUser(currentUser);
+  const me = allUsers.find(u => String(u.id) === String(currentUser.id));
+  if (me) me.bio = text;
+  rebuildUsersByName();
 }
-
-// 全局事件委托：所有「⋯」按钮的点击
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.post-menu-btn');
-  if (btn) {
-    e.preventDefault();
-    e.stopPropagation();
-    showPostMenu(Number(btn.dataset.postId), btn);
-  }
-});
 
 /* ============ 登录 ============ */
 function renderLogin() {
@@ -1518,7 +1505,7 @@ function renderLogin() {
     btn.disabled = true; btn.textContent = '登录中…';
     try {
       const user = await loginUser(loginName, password);
-      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name, avatar: user.avatar || null });
+      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name, avatar: user.avatar || null, bio: user.bio || '' });
       location.hash = '#/me'; location.reload();
     } catch (e) {
       errBox.innerHTML = `<div class="auth-error">${escapeHTML(e.message)}</div>`;
@@ -1561,7 +1548,7 @@ function renderRegister() {
     btn.disabled = true; btn.textContent = '注册中…';
     try {
       const user = await registerUser(loginNameVal, displayNameVal, password);
-      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name, avatar: null });
+      saveUser({ id: user.id, loginName: user.login_name, displayName: user.display_name, avatar: null, bio: '' });
       location.hash = '#/me'; location.reload();
     } catch (e) {
       errBox.innerHTML = `<div class="auth-error">${escapeHTML(e.message)}</div>`;
@@ -1836,6 +1823,7 @@ function renderMe() {
   const myFavPosts = visiblePosts(posts.filter(p => myFavorites.has(p.id))).sort((a, b) => b.id - a.id);
   const hiddenList = posts.filter(p => hiddenPosts.has(p.id));
   const totalLikes = myPosts.reduce((sum, p) => sum + (p.likes || 0), 0);
+  const bioText = currentUser.bio || '';
 
   let tabContent = '';
   if (meTab === 'posts') {
@@ -1893,6 +1881,8 @@ function renderMe() {
         <div class="me-info">
           <h1>${escapeHTML(name)}</h1>
           <p class="me-email">登录名：${escapeHTML(currentUser.loginName)}</p>
+          <div class="bio-text">${bioText ? escapeHTML(bioText) : '这个人很懒，什么都没写。'}</div>
+          <span class="edit-bio-btn" id="editBioBtn">编辑简介</span>
           <div class="stat-row">
             <div class="stat-item"><strong>${myPosts.length}</strong>篇文章</div>
             <div class="stat-item"><strong>${myFavorites.size}</strong>个收藏</div>
@@ -1919,6 +1909,45 @@ function renderMe() {
       ${tabContent}
     </div>
   `;
+
+  // 编辑简介逻辑
+  document.getElementById('editBioBtn').addEventListener('click', () => {
+    const modal = document.createElement('div');
+    modal.className = 'modal-mask';
+    modal.innerHTML = `
+      <div class="modal">
+        <h3>编辑个人简介</h3>
+        <p class="modal-sub">写点关于你自己的介绍，让别人更了解你。</p>
+        <div class="form-group">
+          <textarea id="bioInput" class="short" placeholder="例如：一个喜欢画画的人，约稿请私信。" maxlength="100">${escapeHTML(bioText)}</textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="mini-btn primary" id="saveBioBtn">保存</button>
+          <button class="mini-btn" id="cancelBioBtn">取消</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    
+    const input = modal.querySelector('#bioInput');
+    input.focus();
+
+    modal.querySelector('#cancelBioBtn').addEventListener('click', () => modal.remove());
+    modal.querySelector('#saveBioBtn').addEventListener('click', async () => {
+      const newBio = input.value.trim();
+      const chk = checkContent(newBio);
+      if (!chk.ok) { showSensitiveError(chk.hits); return; }
+      try {
+        await saveBio(newBio);
+        modal.remove();
+        renderMe();
+        showSync('简介已更新');
+      } catch (err) {
+        alert('保存失败：' + (err.message || '请重试'));
+      }
+    });
+  });
 
   const wrap = document.getElementById('avatarWrap');
   const input = document.getElementById('avatarInput');
@@ -1972,6 +2001,8 @@ function renderUser(name) {
   const followBtn = !isMe && currentUser ? `<button class="follow-btn ${isFollowing ? 'followed' : ''}" id="followAuthorBtn">${isFollowing ? '已关注' : '+ 关注'}</button>` : '';
   const loginHint = !currentUser ? `<a href="#/login" class="mini-btn">登录后可关注</a>` : '';
   const avatarBlock = avatarURL(decoded) ? `<img class="me-avatar" src="${avatarURL(decoded)}" alt="" />` : `<div class="me-avatar">${escapeHTML(decoded[0])}</div>`;
+  const u = usersByName[decoded];
+  const bioText = u && u.bio ? u.bio : '';
 
   app.innerHTML = `
     <div class="container">
@@ -1980,6 +2011,7 @@ function renderUser(name) {
         ${avatarBlock}
         <div class="me-info">
           <h1>${escapeHTML(decoded)}</h1>
+          <div class="bio-text" style="margin-bottom:12px;">${bioText ? escapeHTML(bioText) : '这个人很懒，什么都没写。'}</div>
           <div class="stat-row">
             <div class="stat-item"><strong>${list.length}</strong>篇文章</div>
             <div class="stat-item"><strong>${myColls.length}</strong>个合集</div>
@@ -2244,6 +2276,9 @@ function renderPost(id) {
   const authorAvatar = avatarHTML(p.author, 40);
   const contentDisplay = looksLikeHTML(p.content) ? sanitizeHTML(p.content) : escapeHTML(p.content || p.excerpt).replace(/\n/g, '<br>');
   const reportBtn = !isMine && currentUser ? `<span class="report-text" id="reportPostBtn">举报这篇文章</span>` : '';
+  
+  const authorUser = usersByName[p.author];
+  const authorBio = authorUser && authorUser.bio ? `<div style="font-size:12px;color:var(--text-3);margin-top:2px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(authorUser.bio)}</div>` : '';
 
   app.innerHTML = `
     <div class="container">
@@ -2256,6 +2291,7 @@ function renderPost(id) {
             <div>
               <a class="author-link" href="#/user/${encodeURIComponent(p.author)}" style="font-size:15px;font-weight:500;">${escapeHTML(p.author)}</a>
               <div style="font-size:12px;color:var(--text-3);">${p.date}</div>
+              ${authorBio}
             </div>
           </div>
           <button class="toc-mobile-btn" id="tocMobileBtn" style="display:none;"></button>
