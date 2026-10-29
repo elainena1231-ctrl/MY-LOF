@@ -1,0 +1,17 @@
+{
+  "name": "拾光小天地",
+  "short_name": "拾光",
+  "description": "一个图文创作社区",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff5c5c",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
